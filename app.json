@@ -2,28 +2,49 @@
   "expo": {
     "name": "MyGymMatePlus",
     "slug": "MyGymMatePlus",
+    "owner": "cse344",
+    "scheme": "mygymmateplus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
+
+
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
+
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "edu.yeditepe.mygymmateplus",
+      "infoPlist": {
+        "UIStatusBarHidden": false,
+        "UIViewControllerBasedStatusBarAppearance": true
+      }
+
     },
+
     "android": {
+      "package": "edu.yeditepe.mygymmateplus",
+      "googleServicesFile": "./android/app/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
     },
+
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios":     { "googleServicesFile": "./ios/GoogleService-Info.plist" },
+          "android": { "googleServicesFile": "./android/app/google-services.json" }
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -34,8 +55,12 @@
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": true
+
+    "experiments": { "typedRoutes": true },
+
+    "extra": {
+      "eas": { "projectId": "0a8e7a55-40f2-4b75-b979-23f9b995edd9" },
+      "router": { "origin": false }
     }
   }
 }
