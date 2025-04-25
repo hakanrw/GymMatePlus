@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {useNavigation} from "@react-navigation/native";
 import { MainButton } from '@/components/MainButton';
 import { FontAwesome } from '@expo/vector-icons';
+import { Container } from '@/components/Container';
 
 const gyms = [
     {
@@ -49,7 +50,7 @@ const GymSelection = () => {
 
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <Container>
             <Text style={styles.header}>Gym Selection</Text>
 
             {/* Dropdown Header */}
@@ -63,23 +64,23 @@ const GymSelection = () => {
                         <FontAwesome name="chevron-down" size={12} color="#aaa" style={{ marginLeft: 6 }} />
                         </TouchableOpacity>
                 </View>
-
-                {/* Dropdown List */}
-                {dropdownOpen && (
-                    <View style={styles.dropdownList}>
-                        {gyms.map((gym) => (
-                            <TouchableOpacity
-                                key={gym.id}
-                                style={styles.dropdownItem}
-                                onPress={() => handleSelect(gym)}
-                            >
-                                <Text style={styles.dropdownItemText}>{gym.name}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
             </View>
 
+            {/* Dropdown List */}
+            {dropdownOpen && (
+                <View style={styles.dropdownList}>
+                    {gyms.map((gym) => (
+                        <TouchableOpacity
+                            key={gym.id}
+                            style={styles.dropdownItem}
+                            onPress={() => handleSelect(gym)}
+                        >
+                            <Text style={styles.dropdownItemText}>{gym.name}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            )}
+            
             {/* Gym Info */}
             <View style={[styles.card, {flexDirection: 'row', alignItems: 'center', marginTop: 30}]}>
                 <Image style={styles.image} source={require('../../assets/images/map.png')} />
@@ -107,16 +108,11 @@ const GymSelection = () => {
             <MainButton 
                 onPress={() => navigation.navigate('Payment', { gym: selectedGym })}
                 text="Continue to Payment"/>
-        </SafeAreaView>
+        </Container>
     );
 };
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: '#fff',
-        paddingHorizontal: 20,
-    },
     header: {
         fontSize: 20,
         fontWeight: 'bold',
@@ -150,8 +146,8 @@ const styles = StyleSheet.create({
     },
     dropdownList: {
         position: 'absolute',
-        top: 60,
-        zIndex: 10,
+        top: 125,
+        zIndex: 100,
         borderWidth: 1,
         borderTopWidth: 0,
         borderColor: '#e0e0e0',

@@ -21,6 +21,14 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import GymSelection from "@/app/Screens/GymSelection";
 import Payment from "@/app/Screens/Payment";
+import { Dumbell } from '@/components/Dumbell';
+import Home from './Screens/Main/Home';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStaticNavigation } from '@react-navigation/native';
+import Calendar from './Screens/Main/Calendar';
+import Profile from './Screens/Main/Profile';
+import Chat from './Screens/Main/Chat';
+import QR from './Screens/Main/QR';
 
 // ✅ Firebase config
 const firebaseConfig = {
@@ -92,11 +100,7 @@ function SignUpScreen({ navigation }: any) {
       <SafeAreaView style={styles.container}>
         <StatusBar style="dark" backgroundColor="#fff" translucent={false} />
         <View style={styles.logoContainer}>
-          <View style={styles.dumbbellIcon}>
-            <View style={styles.dumbbellWeight} />
-            <View style={styles.dumbbellBar} />
-            <View style={styles.dumbbellWeight} />
-          </View>
+          <Dumbell/>
           <Text style={styles.title}>GymMate+</Text>
         </View>
 
@@ -148,17 +152,65 @@ function SignUpScreen({ navigation }: any) {
 
 export default function App() {
   return (
-
         <Stack.Navigator>
           <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
           <Stack.Screen name="WelcomeScreen" component={Welcome} options={{ headerShown: false }} />
           <Stack.Screen name="GymSelection" component={GymSelection} options={{ headerShown: false }} />
           <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false }} />
-
+          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
         </Stack.Navigator>
+  )
+}
+const Tab = createBottomTabNavigator();
 
-  )}
+function MainTabs() {
+  return (
+    <Tab.Navigator screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#000',
+        tabBarStyle: {
+            backgroundColor: '#fff',
+            height: 70,
+            paddingTop: 10,
+            borderTopWidth: 0,
+          },
+          tabBarShowLabel: false
+    }}>
+      <Tab.Screen name="Home" component={Home} options={{tabBarIcon: ({color,size}) => <FontAwesome name="home" size={size} color={color}/>}}/>
+      <Tab.Screen name="Calendar" component={Calendar} options={{tabBarIcon: ({color,size}) => <FontAwesome name="calendar" size={size} color={color}/>}}/>
+      <Tab.Screen
+        name="QR"
+        component={QR}
+        options={{
+        tabBarIcon: ({ focused }) => (
+            <View
+                style={{
+                    width: 70,
+                    height: 70,
+                    borderRadius: 10,
+                    backgroundColor: '#000',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: 30, // push it up
+                    elevation: 5, // for Android shadow
+                }}>
+                <FontAwesome
+                    name="qrcode"
+                    size={40}
+                    color={'#fff'}
+                />
+            </View>
+            ),
+        }}
+      />
+      <Tab.Screen name="Chat" component={Chat} options={{tabBarIcon: ({color,size}) => <FontAwesome name="superpowers" size={size} color={color}/>}}/>
+      <Tab.Screen name="Profile" component={Profile} options={{tabBarIcon: ({color,size}) => <FontAwesome name="user" size={size} color={color}/>}}/>
+      {/* Add more tabs like below if needed */}
+      {/* <Tab.Screen name="Settings" component={Settings} /> */}
+    </Tab.Navigator>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -170,25 +222,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 30,
     marginBottom: 30,
-  },
-  dumbbellIcon: {
-    width: 60,
-    height: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dumbbellWeight: {
-    width: 18,
-    height: 30,
-    backgroundColor: '#000',
-    borderRadius: 4,
-  },
-  dumbbellBar: {
-    width: 20,
-    height: 8,
-    backgroundColor: '#000',
-    marginHorizontal: 2,
   },
   title: {
     fontSize: 38,

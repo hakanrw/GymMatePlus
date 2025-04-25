@@ -8,23 +8,24 @@ import {
     StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { MainButton } from '@/components/MainButton';
+import { Container } from '@/components/Container';
 
 const Payment = () => {
+    const navigation = useNavigation() as any;
     const route = useRoute();
     const gym = (route.params as any)?.gym ?? { name: 'Unknown Gym', price: 0 };
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <Container>
             <Text style={styles.header}>Gym Payment</Text>
 
             <View style={styles.gymInfo}>
                 <View style={styles.logoContainer}>
                     <Image
-
+                        source={require("../../assets/images/fitness.png")}
                         style={styles.logo}
-                        resizeMode="contain"
                     />
                 </View>
                 <Text style={styles.gymName}>{gym?.name}</Text>
@@ -77,10 +78,10 @@ const Payment = () => {
 
             {/* Submit Button */}
             <MainButton 
-                onPress={() => {}}
+                onPress={() => {navigation.navigate('Main');}}
                 text="Start Subscription"
             />
-        </SafeAreaView>
+        </Container>
     );
 };
 
@@ -106,12 +107,10 @@ const styles = StyleSheet.create({
         height: 48,
         backgroundColor: '#f5f5f5',
         borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     logo: {
-        width: 32,
-        height: 32,
+        width: '100%',
+        height: '100%'
     },
     gymName: {
         fontSize: 18,

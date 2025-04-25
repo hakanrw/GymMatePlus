@@ -13,6 +13,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { MainButton } from '@/components/MainButton';
+import { Container } from '@/components/Container';
 
 const ProfileScreen = () => {
     const [selectedGoals, setSelectedGoals] = useState<string[]>(['Lose Weight']);
@@ -43,7 +44,7 @@ const ProfileScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <Container>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
@@ -183,19 +184,14 @@ const ProfileScreen = () => {
                         text={"Create Profile"}/>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </Container>
     );
 };
 
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
+
     title: {
         fontSize: 20,
         fontWeight: 'bold',

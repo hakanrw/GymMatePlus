@@ -11,6 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { MainButton } from '@/components/MainButton';
+import { Container } from '@/components/Container';
+import { Dumbell } from '@/components/Dumbell';
 
 const Welcome = () => {
     const navigation = useNavigation() as any;
@@ -20,42 +22,31 @@ const Welcome = () => {
     };
 
     return (
-        <View style={styles.root}>
-            <StatusBar style="dark" translucent backgroundColor="transparent" />
-            {Platform.OS === 'android' && (
-                <View style={{ height: RNStatusBar.currentHeight }} />
-            )}
-            <SafeAreaView style={styles.container}>
-                <View>
-                    <Text style={styles.title}>Welcome to GymMate+!</Text>
-                    <Text style={styles.title1}>Welcome to GymMate+!</Text>
-                    <Text style={styles.title2}>Welcome to GymMate+!</Text>
-                </View>
-
-                <Text style={styles.description}>
-                    Your personal fitness journey starts now.{"\n"}
-                    Ready to crush your goals today?
-                </Text>
-                <MainButton
-                    onPress={handleContinue}
-                    text="Continue to Gym Selection"/>
-            </SafeAreaView>
-        </View>
+        <Container style={{justifyContent: 'space-between', alignItems: 'center'}}>
+            <View>
+                <Text style={styles.title}>Welcome to GymMate+!</Text>
+                <Text style={styles.title1}>Welcome to GymMate+!</Text>
+                <Text style={styles.title2}>Welcome to GymMate+!</Text>
+            </View>
+            <Dumbell style={{transform: [{scale: 1.2}], opacity: 0.5}}/>
+            <Text style={styles.description}>
+                Your personal fitness journey starts now.{"\n"}
+                Ready to crush your goals today?
+            </Text>
+            {/* Padding */}
+            <View />
+            <View />
+            <View />
+            <MainButton
+                onPress={handleContinue}
+                text="Continue to Gym Selection"/>
+        </Container>
     );
 };
 
 export default Welcome;
 
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    container: {
-        flex: 1,
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-    },
     title: {
         fontSize: 30,
         height: 42,
