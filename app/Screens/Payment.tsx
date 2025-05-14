@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
     View,
     Text,
@@ -11,11 +11,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
+import { httpsCallable } from '@firebase/functions';
+import { functions } from '../firebaseConfig';
+import { AppContext } from '@/contexts/PingContext';
 
 const Payment = () => {
-    const navigation = useNavigation() as any;
     const route = useRoute();
     const gym = (route.params as any)?.gym ?? { name: 'Unknown Gym', price: 0 };
+
+    const { ping } = useContext(AppContext);
+
+    const submitPayment = () => {
+        const selectGymAndPayment = httpsCallable(functions, 'selectGymAndPayment');
+        selectGymAndPayment({
+            gym: 1,
+            paymentInfo: "AAAA-AAAA-AAAA-AAAA"
+        }).then((value) => {
+            console.log(value);
+            ping();
+        }).catch((error) => {
+            console.error(error);
+        });
+    };
 
     return (
         <Container>
@@ -77,9 +94,7 @@ const Payment = () => {
             <View style={{flex: 1}}/>
 
             {/* Submit Button */}
-            <MainButton 
-                onPress={() => {navigation.navigate('Main');}}
-                text="Start Subscription"
+            <MainButton onPress={submitPayment} text="Start Subscription"
             />
         </Container>
     );

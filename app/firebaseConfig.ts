@@ -1,16 +1,29 @@
+import { connectFirestoreEmulator, getFirestore } from '@firebase/firestore';
+import { connectFunctionsEmulator, getFunctions } from '@firebase/functions';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-    apiKey: 'AIzaSyDVI_lPO3kYfCJYzFKDoE2kvbsBkUktP9M',
-    authDomain: 'mygymmate-6082a.firebaseapp.com',
-    projectId: 'mygymmate-6082a',
-    storageBucket: 'mygymmate-6082a.appspot.com',
-    messagingSenderId: '76174759333',
-    appId: '1:76174759333:web:0999e195bf90296b87c44c',
+    apiKey: "AIzaSyAt4Kupdd1J6ki9yfhpHjVIZaA3FEItgKk",
+    authDomain: "plus-gymmate.firebaseapp.com",
+    projectId: "plus-gymmate",
+    storageBucket: "plus-gymmate.firebasestorage.app",
+    messagingSenderId: "714875913611",
+    appId: "1:714875913611:web:58a1d2519c1bf565eddb8e",
+    measurementId: "G-EJ0Z25PBYF"
 };
 
-// ✅ Prevent duplicate initialization
+// Prevent duplicate initialization
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
+// Only use emulators in development mode
+if (__DEV__) {
+    connectAuthEmulator(getAuth(), 'http://localhost:9099');
+    connectFirestoreEmulator(getFirestore(), 'localhost', 9299);
+    connectFunctionsEmulator(getFunctions(app, 'europe-west1'), 'localhost', 5001)
+}
+
+export { app };
 export const auth = getAuth(app);
+export const firestore = getFirestore(app);
+export const functions = getFunctions(app, 'europe-west1');

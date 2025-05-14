@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     View,
     Text,
@@ -14,8 +14,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
+import { httpsCallable } from '@firebase/functions';
+import { AppContext } from '@/contexts/PingContext';
+import { functions } from '../firebaseConfig';
 
 const ProfileScreen = () => {
+    const { ping } = useContext(AppContext);
     const [selectedGoals, setSelectedGoals] = useState<string[]>(['Lose Weight']);
     const [selectedAreas, setSelectedAreas] = useState<string[]>(['Chest', 'Biceps', 'Glutes']);
     const [selectedSex, setSelectedSex] = useState<string>('Female');
@@ -38,9 +42,22 @@ const ProfileScreen = () => {
             setSelectedAreas([...selectedAreas, area]);
         }
     };
-    const navigation = useNavigation() as any;
-    const handleContinue = () => {
-        navigation.navigate('WelcomeScreen');
+    
+    const submitProfile = () => {
+        const submitUserProfile = httpsCallable(functions, 'submitUserProfile');
+        submitUserProfile({
+            weight: Number.parseInt(weight),
+            height: Number.parseInt(height),
+            sex: selectedSex,
+            dateOfBirth: '1997-10-25',
+            fitnessGoals: selectedGoals,
+            difficulty: 'Medium'
+        }).then((value) => {
+            console.log(value);
+            ping();
+        }).catch((error) => {
+            console.error(error);
+        });
     };
 
     return (
@@ -176,12 +193,7 @@ const ProfileScreen = () => {
                     </View>
 
                     {/* Submit Button */}
-                    <MainButton 
-                        onPress={() => {
-                            console.log('Profile Created');
-                            handleContinue();
-                        }}
-                        text={"Create Profile"}/>
+                    <MainButton onPress={submitProfile} text="Create Profile"/>
                 </ScrollView>
             </KeyboardAvoidingView>
         </Container>
