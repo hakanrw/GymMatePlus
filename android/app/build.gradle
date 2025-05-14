@@ -86,7 +86,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.mygymmateplus"
+    namespace "edu.yeditepe.mygymmateplus"
     defaultConfig {
         applicationId "com.mygymmateplus"
         minSdkVersion rootProject.ext.minSdkVersion
