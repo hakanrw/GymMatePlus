@@ -94,7 +94,6 @@ function SignUpScreen({ navigation }: any) {
                             photoURL: user.photoURL,
                         });
                     }
-                    
                     console.log("Success");
                 } else {
                     console.error("Fail response");
