@@ -16,7 +16,7 @@
       "bundleIdentifier": "com.berktkilic.mygymmateplus",
       "infoPlist": {
         "UIStatusBarHidden": false,
-        "UIViewControllerBasedStatusBarAppearance": true
+        "UIViewControllerBasedStatusBarAppearance": false
       },
       "googleServicesFile": "./GoogleService-Info.plist"
     },
