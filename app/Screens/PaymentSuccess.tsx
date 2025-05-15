@@ -16,7 +16,7 @@ const PaymentSuccess = ({ navigation }: any) => {
     useEffect(() => {
         animation.current?.play?.(); // Some Lottie versions require .play()
 
-        if (Platform.OS !== 'web') {
+
             (async () => {
                 const { sound } = await Audio.Sound.createAsync(
                     require('../../assets/sounds/apple_pay_success.mp3'),
@@ -28,7 +28,7 @@ const PaymentSuccess = ({ navigation }: any) => {
                     }
                 });
             })();
-        }
+
     }, []);
 
     const handleDone = () => ping(); // Re-check gym value in index.tsx (see useEffect there)
