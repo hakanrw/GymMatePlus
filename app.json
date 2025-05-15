@@ -37,14 +37,8 @@
     },
 
     "plugins": [
+        "@react-native-google-signin/google-signin",
       "expo-router",
-      [
-        "expo-build-properties",
-        {
-          "ios":     { "googleServicesFile": "./ios/GoogleService-Info.plist" },
-          "android": { "googleServicesFile": "./android/app/google-services.json" }
-        }
-      ],
       [
         "expo-splash-screen",
         {

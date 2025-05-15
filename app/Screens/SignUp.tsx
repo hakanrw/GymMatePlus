@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons';
 import { Dumbell } from '@/components/Dumbell';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
 
 function SignUpScreen({ navigation }: any) {
     const [email, setEmail] = useState('');
@@ -20,8 +21,37 @@ function SignUpScreen({ navigation }: any) {
     const handleContinue = () => {
     };
   
-    const handleGoogleLogin = () => {
-      signInWithPopup(auth, new GoogleAuthProvider());
+    const handleGoogleLogin = async () => {
+        if (Platform.OS === "web") {
+            signInWithPopup(getAuth(), new GoogleAuthProvider());
+        }
+        else {
+            GoogleSignin.configure();
+            try {
+                await GoogleSignin.hasPlayServices();
+                const response = await GoogleSignin.signIn();
+                if (isSuccessResponse(response)) {
+                    console.log("Success");
+                } else {
+                    // sign in was cancelled by user
+                }
+            } catch (error) {
+                if (isErrorWithCode(error)) {
+                switch (error.code) {
+                    case statusCodes.IN_PROGRESS:
+                        // operation (eg. sign in) already in progress
+                        break;
+                    case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+                        // Android only, play services not available or outdated
+                        break;
+                    default:
+                        // some other error happened
+                    }
+                } else {
+                    // an error that's not related to google sign in occurred
+                }
+            }
+        }
     };
   
     const handleAppleSignUp = () => {
