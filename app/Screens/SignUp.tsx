@@ -23,10 +23,15 @@ function SignUpScreen({ navigation }: any) {
   
     const handleGoogleLogin = async () => {
         if (Platform.OS === "web") {
-            signInWithPopup(getAuth(), new GoogleAuthProvider());
+            const provider = new GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            signInWithPopup(getAuth(), provider);
         }
         else {
-            GoogleSignin.configure();
+            GoogleSignin.configure({
+                scopes: ['profile', 'email']
+            });
             try {
                 await GoogleSignin.hasPlayServices();
                 const response = await GoogleSignin.signIn();
@@ -35,7 +40,7 @@ function SignUpScreen({ navigation }: any) {
                     const credential = GoogleAuthProvider.credential(
                         tokens.idToken,
                         tokens.accessToken
-                      );
+                    );
                     await signInWithCredential(getAuth(), credential);
                     console.log("Success");
                 } else {

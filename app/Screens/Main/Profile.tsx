@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,21 +6,49 @@ import {
     StyleSheet,
     Dimensions,
     ScrollView,
-    Image
+    Image,
+    ImageBackground
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Container } from '@/components/Container';
-import {Ionicons} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { LineChart } from 'react-native-chart-kit';
+import { auth } from '../../firebaseConfig';
+import { doc, getDoc, getFirestore } from '@firebase/firestore';
+import { MainButton } from '@/components/MainButton';
+
 const Profile = () => {
     const navigation = useNavigation() as any;
     const [selectedTabs, setSelectedTabs] = useState<{ BMI: boolean; Muscle: boolean }>({
-        BMI: false,
+        BMI: true,
         Muscle: false,
     });
+    const [userData, setUserData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const defaultProfilePic = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+    const [profilePicError, setProfilePicError] = useState(false);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (auth.currentUser) {
+                console.log('Current User:', auth.currentUser);
+                console.log('Photo URL:', auth.currentUser.photoURL);
+                const docRef = doc(getFirestore(), 'users', auth.currentUser.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setUserData(docSnap.data());
+                }
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
     const toggleTab = (tab: 'BMI' | 'Muscle') => {
         setSelectedTabs(prev => ({ ...prev, [tab]: !prev[tab] }));
     };
+
     const handleBack = () => {
         navigation.goBack();
     };
@@ -30,11 +58,18 @@ const Profile = () => {
         datasets: [
             {
                 data: [20.5, 20, 19.4, 19, 18.8, 18.5, 18.3, 18.1],
-                color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`, // optional
+                color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
             },
         ],
     };
 
+    if (loading) {
+        return (
+            <Container>
+                <Text>Loading...</Text>
+            </Container>
+        );
+    }
 
     return (
         <Container style={{padding: 0}}>
@@ -43,12 +78,46 @@ const Profile = () => {
                 <TouchableOpacity onPress={handleBack} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
-                <View style={styles.profilePicContainer}>
-                    <Image
-                        source={{ uri: 'https://storage.googleapis.com/ares-profile-pictures/default/egefitness-158fb1d6e685ea748de869c764598071.jpg' }} // Replace this with actual image source
-                        style={styles.profilePic}
-                    />
+
+                {/* Profile Picture and User Info */}
+                <View style={styles.profileSection}>
+                    <View style={styles.profilePicContainer}>
+                        <Image
+                            source={{ 
+                                uri: auth.currentUser?.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
+                            }}
+                            style={styles.profilePic}
+                            onError={(error) => {
+                                console.log('Image loading error:', error.nativeEvent);
+                                setProfilePicError(true);
+                            }}
+                        />
+                    </View>
+                    <View style={styles.userInfo}>
+                        <Text style={styles.userName}>{auth.currentUser?.displayName || 'User'}</Text>
+                        <Text style={styles.userEmail}>{auth.currentUser?.email}</Text>
+                    </View>
                 </View>
+
+                {/* Stats Cards */}
+                <View style={styles.statsContainer}>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Current BMI</Text>
+                        <Text style={styles.statValue}>
+                            {userData?.weight && userData?.height 
+                                ? ((userData.weight / ((userData.height / 100) ** 2)).toFixed(1))
+                                : 'N/A'}
+                        </Text>
+                        <Text style={styles.statChange}>-12% over last month</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Weight</Text>
+                        <Text style={styles.statValue}>{userData?.weight || 'N/A'} kg</Text>
+                        <Text style={styles.statChange}>-12% month over month</Text>
+                    </View>
+                </View>
+
+                {/* Graph Tabs */}
                 <View style={styles.tabContainer}>
                     {['BMI', 'Muscle'].map((tab) => (
                         <TouchableOpacity
@@ -70,18 +139,8 @@ const Profile = () => {
                         </TouchableOpacity>
                     ))}
                 </View>
-                <View style={styles.statsContainer}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Current BMI</Text>
-                        <Text style={styles.statValue}>19</Text>
-                        <Text style={styles.statChange}>-12% over last month</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Weight</Text>
-                        <Text style={styles.statValue}>68</Text>
-                        <Text style={styles.statChange}>-12% month over month</Text>
-                    </View>
-                </View>
+
+                {/* Graph */}
                 <View style={styles.graphContainer}>
                     <Text style={styles.graphTitle}>BMI History</Text>
                     <LineChart
@@ -109,33 +168,19 @@ const Profile = () => {
                         }}
                     />
                 </View>
-                <View style={styles.userCard}>
-                    <Text style={styles.userSectionTitle}>Title</Text>
 
-                    <View style={styles.userRow}>
-                        <Image
-                            source={{ uri: 'https://randomuser.me/api/portraits/women/1.jpg' }}
-                            style={styles.userAvatar}
-                        />
-                        <View>
-                            <Text style={styles.userName}>Elynn Lee</Text>
-                            <Text style={styles.userEmail}>email@fakedomain.net</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.userRow}>
-                        <Image
-                            source={{ uri: 'https://randomuser.me/api/portraits/men/2.jpg' }}
-                            style={styles.userAvatar}
-                        />
-                        <View>
-                            <Text style={styles.userName}>Oscar Dum</Text>
-                            <Text style={styles.userEmail}>email@fakedomain.net</Text>
-                        </View>
+                {/* Fitness Goals */}
+                <View style={styles.goalsCard}>
+                    <Text style={styles.goalsTitle}>Fitness Goals</Text>
+                    <View style={styles.goalsContainer}>
+                        {userData?.fitnessGoals?.map((goal: string) => (
+                            <View key={goal} style={styles.goalChip}>
+                                <Text style={styles.goalChipText}>{goal}</Text>
+                            </View>
+                        ))}
                     </View>
                 </View>
             </ScrollView>
-
         </Container>
     );
 };
@@ -155,45 +200,43 @@ const styles = StyleSheet.create({
         left: 20,
         zIndex: 1,
     },
+    profileSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 20,
+        marginTop: 20,
+    },
     profilePicContainer: {
-        position: 'absolute',
-        top: 0,
-        right: 20,
-        zIndex: 1,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#f0f0f0',
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: '#e0e0e0',
     },
     profilePic: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
     },
-    tabContainer: {
-        flexDirection: 'row',
-        left: 15,
-        marginBottom: 20,
+    userInfo: {
+        marginLeft: 15,
     },
-    Button: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-        backgroundColor: '#eee',
-        marginHorizontal: 5,
+    userName: {
+        fontSize: 18,
+        fontWeight: '600',
     },
-    selectedTab: {
-        backgroundColor: '#000',
-    },
-    tabText: {
-        color: '#000',
-    },
-    selectedTabText: {
-        color: '#fff',
-    },
-    section: {
-        paddingHorizontal: 10,
+    userEmail: {
+        fontSize: 14,
+        color: '#666',
     },
     statsContainer: {
         flexDirection: 'row',
         paddingHorizontal: 16,
         gap: 16,
+        marginBottom: 20,
     },
     statCard: {
         flex: 1,
@@ -216,23 +259,42 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#666',
     },
+    tabContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        marginBottom: 20,
+    },
+    Button: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        backgroundColor: '#eee',
+        marginRight: 10,
+    },
+    selectedTab: {
+        backgroundColor: '#000',
+    },
+    tabText: {
+        color: '#000',
+    },
+    selectedTabText: {
+        color: '#fff',
+    },
     graphContainer: {
-        marginTop: 24,
         marginHorizontal: 16,
         backgroundColor: '#fff',
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
         borderColor: '#e0e0e0',
+        marginBottom: 20,
     },
-
     graphTitle: {
         fontSize: 16,
         fontWeight: '600',
         marginBottom: 12,
     },
-    userCard: {
-        marginTop: 24,
+    goalsCard: {
         marginHorizontal: 16,
         backgroundColor: '#fff',
         borderRadius: 16,
@@ -240,34 +302,24 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e0e0e0',
     },
-
-    userSectionTitle: {
+    goalsTitle: {
         fontSize: 16,
         fontWeight: '600',
         marginBottom: 12,
     },
-
-    userRow: {
+    goalsContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
+        flexWrap: 'wrap',
+        gap: 8,
     },
-
-    userAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 12,
+    goalChip: {
+        backgroundColor: '#f0f0f0',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
     },
-
-    userName: {
+    goalChipText: {
         fontSize: 14,
-        fontWeight: '500',
+        color: '#333',
     },
-
-    userEmail: {
-        fontSize: 12,
-        color: '#666',
-    },
-
 });
