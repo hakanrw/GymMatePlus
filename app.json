@@ -13,17 +13,17 @@
     "newArchEnabled": true,
 
     "ios": {
-      "bundleIdentifier": "edu.yeditepe.mygymmateplus",
+      "bundleIdentifier": "com.berktkilic.mygymmateplus",
       "infoPlist": {
         "UIStatusBarHidden": false,
         "UIViewControllerBasedStatusBarAppearance": true
-      }
-
+      },
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
 
     "android": {
       "package": "edu.yeditepe.mygymmateplus",
-      "googleServicesFile": "./android/app/google-services.json",
+      "googleServicesFile": "google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
