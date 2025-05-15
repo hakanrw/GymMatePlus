@@ -30,6 +30,7 @@ import { auth } from './firebaseConfig';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from '@firebase/firestore';
 import SignUpScreen from './Screens/SignUp';
+import ChatRoom from './Screens/ChatRoom';
 import PaymentSuccess from './Screens/PaymentSuccess';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -66,6 +67,14 @@ function AppStack() {
     return (
         <Stack.Navigator>
             <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+            <Stack.Screen 
+                name="ChatRoom" 
+                component={ChatRoom} 
+                options={{ 
+                    headerShown: false,
+                    presentation: 'card'
+                }} 
+            />
         </Stack.Navigator>
     );
 }
