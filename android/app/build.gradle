@@ -88,7 +88,7 @@ android {
 
     namespace "edu.yeditepe.mygymmateplus"
     defaultConfig {
-        applicationId "com.mygymmateplus"
+        applicationId "edu.yeditepe.mygymmateplus"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
