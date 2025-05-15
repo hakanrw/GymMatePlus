@@ -2,6 +2,7 @@ import { connectFirestoreEmulator, getFirestore } from '@firebase/firestore';
 import { connectFunctionsEmulator, getFunctions } from '@firebase/functions';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAt4Kupdd1J6ki9yfhpHjVIZaA3FEItgKk",
@@ -17,7 +18,7 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Only use emulators in development mode
-if (__DEV__) {
+if (__DEV__ && Platform.OS === "web") {
     connectAuthEmulator(getAuth(app), 'http://localhost:9099');
     connectFirestoreEmulator(getFirestore(app), 'localhost', 9299);
     connectFunctionsEmulator(getFunctions(app, 'europe-west1'), 'localhost', 5001)

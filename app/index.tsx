@@ -92,6 +92,7 @@ export default function App() {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         setUser(user);
         setLoading(false);
+        console.log("User", user);
       });
   
       return unsubscribe;

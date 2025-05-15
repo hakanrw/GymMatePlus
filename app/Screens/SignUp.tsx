@@ -36,7 +36,8 @@ function SignUpScreen({ navigation }: any) {
                         tokens.idToken,
                         tokens.accessToken
                       );
-                    signInWithCredential(getAuth(), credential);
+                    await signInWithCredential(getAuth(), credential);
+                    console.log("Success");
                 } else {
                     console.error("Fail response");
                 }
@@ -50,7 +51,7 @@ function SignUpScreen({ navigation }: any) {
                         // Android only, play services not available or outdated
                         break;
                     default:
-                        // some other error happened
+                        console.error(error);
                     }
                 } else {
                     console.error(error);
