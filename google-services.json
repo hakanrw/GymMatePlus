@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "714875913611",
+    "project_id": "plus-gymmate",
+    "storage_bucket": "plus-gymmate.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:714875913611:android:a369b347fc7e0051eddb8e",
+        "android_client_info": {
+          "package_name": "edu.yeditepe.mygymmateplus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "714875913611-8csudoq3gdh0rjd321291juu4a0mssod.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCrzUcBvsmk2ELfW3HYd8cNM5ucZk97vA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "714875913611-8csudoq3gdh0rjd321291juu4a0mssod.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
