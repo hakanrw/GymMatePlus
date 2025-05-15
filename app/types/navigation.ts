@@ -1,7 +1,15 @@
 export type RootStackParamList = {
-    Main: undefined;
+    SignUp: undefined;
+    Welcome: undefined;
+    GymSelection: undefined;
+    Payment: undefined;
+    PaymentSuccess: undefined;
+    UserSelection: undefined;
     ChatRoom: {
+        chatId?: string;
         name: string;
+        photoURL?: string;
+        userId?: string;
     };
     // Add other screen params here
 };

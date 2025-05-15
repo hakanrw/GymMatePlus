@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -16,72 +16,162 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/app/types/navigation';
 import { GifPicker } from '../../components/GifPicker';
+import { auth } from '../firebaseConfig';
+import { 
+    collection, 
+    query, 
+    orderBy, 
+    onSnapshot, 
+    addDoc, 
+    serverTimestamp, 
+    getFirestore,
+    doc,
+    updateDoc,
+    getDoc
+} from '@firebase/firestore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatRoom'>;
 
 interface Message {
     id: string;
     text: string;
-    sender: 'user' | 'other';
-    timestamp: string;
+    senderId: string;
+    timestamp: Date;
     type: 'text' | 'gif';
     gifUrl?: string;
 }
 
-// Update initialMessages to include type
-const initialMessages: Message[] = [
-    { id: '1', text: 'Hey, are you coming to the gym today?', sender: 'other', timestamp: '10:00 AM', type: 'text' },
-    { id: '2', text: 'Yes, I\'ll be there in an hour', sender: 'user', timestamp: '10:01 AM', type: 'text' },
-    { id: '3', text: 'Great! Let\'s do a workout together', sender: 'other', timestamp: '10:01 AM', type: 'text' },
-    { id: '4', text: 'Sure, what are you planning to train?', sender: 'user', timestamp: '10:02 AM', type: 'text' },
-    { id: '5', text: 'Thinking about chest and triceps', sender: 'other', timestamp: '10:02 AM', type: 'text' },
-];
-
-const MessageBubble: React.FC<{ message: Message }> = ({ message }) => (
-    <View style={[
-        styles.messageBubble,
-        message.sender === 'user' ? styles.userMessage : styles.otherMessage
-    ]}>
-        {message.type === 'text' ? (
-            <Text style={[
-                styles.messageText,
-                message.sender === 'user' ? styles.userMessageText : styles.otherMessageText
-            ]}>
-                {message.text}
+const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
+    const isCurrentUser = message.senderId === auth.currentUser?.uid;
+    
+    return (
+        <View style={[
+            styles.messageBubble,
+            isCurrentUser ? styles.userMessage : styles.otherMessage
+        ]}>
+            {message.type === 'text' ? (
+                <Text style={[
+                    styles.messageText,
+                    isCurrentUser ? styles.userMessageText : styles.otherMessageText
+                ]}>
+                    {message.text}
+                </Text>
+            ) : (
+                <Image
+                    source={{ uri: message.gifUrl }}
+                    style={styles.gifMessage}
+                    resizeMode="contain"
+                />
+            )}
+            <Text style={styles.timestamp}>
+                {message.timestamp.toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })}
             </Text>
-        ) : (
-            <Image
-                source={{ uri: message.gifUrl }}
-                style={styles.gifMessage}
-                resizeMode="contain"
-            />
-        )}
-        <Text style={styles.timestamp}>{message.timestamp}</Text>
-    </View>
-);
+        </View>
+    );
+};
 
 const ChatRoom: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute<Props['route']>();
-    const { name } = route.params;
+    const { chatId, name, photoURL, userId } = route.params;
     
-    const [messages, setMessages] = useState<Message[]>(initialMessages);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
     const [isGifPickerVisible, setIsGifPickerVisible] = useState(false);
     const flatListRef = React.useRef<FlatList>(null);
 
-    const sendMessage = (text: string, type: 'text' | 'gif' = 'text', gifUrl?: string) => {
-        const newMessage: Message = {
-            id: (messages.length + 1).toString(),
+    useEffect(() => {
+        const initializeChat = async () => {
+            if (!chatId && userId && auth.currentUser) {
+                // Create new chat
+                const db = getFirestore();
+                const newChatRef = await addDoc(collection(db, 'conversations'), {
+                    participants: [auth.currentUser.uid, userId],
+                    lastMessage: {
+                        text: '',
+                        timestamp: serverTimestamp(),
+                        senderId: auth.currentUser.uid
+                    },
+                    participantInfo: {
+                        [auth.currentUser.uid]: {
+                            name: auth.currentUser.displayName || 'You',
+                            photoURL: auth.currentUser.photoURL
+                        },
+                        [userId]: {
+                            name: name,
+                            photoURL: photoURL
+                        }
+                    }
+                });
+
+                // Update route params with new chatId
+                navigation.setParams({ chatId: newChatRef.id });
+            }
+        };
+
+        initializeChat();
+    }, [chatId, userId]);
+
+    useEffect(() => {
+        if (!chatId) return;
+
+        const db = getFirestore();
+        const q = query(
+            collection(db, `conversations/${chatId}/messages`),
+            orderBy('timestamp', 'asc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const messageData: Message[] = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                messageData.push({
+                    id: doc.id,
+                    text: data.text,
+                    senderId: data.senderId,
+                    timestamp: data.timestamp?.toDate() || new Date(),
+                    type: data.type || 'text',
+                    gifUrl: data.gifUrl,
+                });
+            });
+            setMessages(messageData);
+        });
+
+        return () => unsubscribe();
+    }, [chatId]);
+
+    const sendMessage = async (text: string, type: 'text' | 'gif' = 'text', gifUrl?: string) => {
+        if (!chatId || !auth.currentUser) return;
+
+        const db = getFirestore();
+        const messageData = {
             text,
-            sender: 'user',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            senderId: auth.currentUser.uid,
+            timestamp: serverTimestamp(),
             type,
             ...(gifUrl && { gifUrl }),
         };
 
-        setMessages([...messages, newMessage]);
-        setInputText('');
+        try {
+            // Add message to subcollection
+            await addDoc(collection(db, `conversations/${chatId}/messages`), messageData);
+
+            // Update last message in conversation
+            await updateDoc(doc(db, 'conversations', chatId), {
+                lastMessage: {
+                    text,
+                    timestamp: serverTimestamp(),
+                    senderId: auth.currentUser.uid,
+                },
+            });
+
+            setInputText('');
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
     };
 
     const handleSendGif = (gifUrl: string) => {
@@ -98,6 +188,11 @@ const ChatRoom: React.FC = () => {
                     <Ionicons name="arrow-back" size={24} color="#007AFF" />
                 </TouchableOpacity>
                 <View style={styles.headerInfo}>
+                    {photoURL ? (
+                        <Image source={{ uri: photoURL }} style={styles.headerAvatar} />
+                    ) : (
+                        <Ionicons name="person-circle-outline" size={40} color="#666" />
+                    )}
                     <Text style={styles.headerName}>{name}</Text>
                 </View>
                 <View style={styles.headerActions}>
@@ -187,6 +282,8 @@ const styles = StyleSheet.create({
     },
     headerInfo: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
         marginLeft: 10,
     },
     headerName: {
@@ -269,5 +366,11 @@ const styles = StyleSheet.create({
         width: 200,
         height: 150,
         borderRadius: 8,
+    },
+    headerAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
     },
 }); 

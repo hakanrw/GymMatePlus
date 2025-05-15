@@ -6,18 +6,57 @@ import {
     StyleSheet,
     Dimensions,
     ScrollView,
-    Image
+    Image,
+    ImageBackground,
+    Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Container } from '@/components/Container';
 import {Ionicons} from "@expo/vector-icons";
 import { LineChart } from 'react-native-chart-kit';
+import { auth } from '../../firebaseConfig';
+import { doc, getDoc, getFirestore } from '@firebase/firestore';
+import { MainButton } from '@/components/MainButton';
+import { signOut } from 'firebase/auth';
+
 const Profile = () => {
     const navigation = useNavigation() as any;
     const [selectedTabs, setSelectedTabs] = useState<{ BMI: boolean; Muscle: boolean }>({
         BMI: false,
         Muscle: false,
     });
+    const [userData, setUserData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const defaultProfilePic = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+    const [profilePicError, setProfilePicError] = useState(false);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (auth.currentUser) {
+                console.log('Current User:', auth.currentUser);
+                console.log('Photo URL:', auth.currentUser.photoURL);
+                const docRef = doc(getFirestore(), 'users', auth.currentUser.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setUserData(docSnap.data());
+                }
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            // Navigation will be handled by the auth state listener in App.tsx
+        } catch (error) {
+            console.error('Error signing out:', error);
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+        }
+    };
+
     const toggleTab = (tab: 'BMI' | 'Muscle') => {
         setSelectedTabs(prev => ({ ...prev, [tab]: !prev[tab] }));
     };
@@ -134,6 +173,15 @@ const Profile = () => {
                         </View>
                     </View>
                 </View>
+
+                {/* Sign Out Button */}
+                <TouchableOpacity 
+                    style={styles.signOutButton}
+                    onPress={handleSignOut}
+                >
+                    <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                    <Text style={styles.signOutText}>Sign Out</Text>
+                </TouchableOpacity>
             </ScrollView>
 
         </Container>
@@ -264,10 +312,22 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
     },
-
-    userEmail: {
-        fontSize: 12,
-        color: '#666',
+    signOutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        padding: 16,
+        marginHorizontal: 16,
+        marginTop: 20,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#FF3B30',
     },
-
+    signOutText: {
+        color: '#FF3B30',
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 8,
+    },
 });

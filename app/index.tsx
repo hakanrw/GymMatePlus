@@ -32,6 +32,7 @@ import { doc, getDoc, getFirestore } from '@firebase/firestore';
 import SignUpScreen from './Screens/SignUp';
 import ChatRoom from './Screens/ChatRoom';
 import PaymentSuccess from './Screens/PaymentSuccess';
+import UserSelection from './Screens/UserSelection';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -70,6 +71,14 @@ function AppStack() {
             <Stack.Screen 
                 name="ChatRoom" 
                 component={ChatRoom} 
+                options={{ 
+                    headerShown: false,
+                    presentation: 'card'
+                }} 
+            />
+            <Stack.Screen 
+                name="UserSelection" 
+                component={UserSelection} 
                 options={{ 
                     headerShown: false,
                     presentation: 'card'
