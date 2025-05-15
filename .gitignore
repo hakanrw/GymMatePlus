@@ -36,3 +36,9 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+*-debug.log
+
+# Expo
+.expo
+dist/
+web-build/
