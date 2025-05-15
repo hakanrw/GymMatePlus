@@ -11,9 +11,9 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons';
 import { Dumbell } from '@/components/Dumbell';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, SignInSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
 
 function SignUpScreen({ navigation }: any) {
     const [email, setEmail] = useState('');
@@ -31,9 +31,14 @@ function SignUpScreen({ navigation }: any) {
                 await GoogleSignin.hasPlayServices();
                 const response = await GoogleSignin.signIn();
                 if (isSuccessResponse(response)) {
-                    console.log("Success");
+                    const tokens = await GoogleSignin.getTokens();
+                    const credential = GoogleAuthProvider.credential(
+                        tokens.idToken,
+                        tokens.accessToken
+                      );
+                    signInWithCredential(getAuth(), credential);
                 } else {
-                    // sign in was cancelled by user
+                    console.error("Fail response");
                 }
             } catch (error) {
                 if (isErrorWithCode(error)) {
@@ -48,6 +53,7 @@ function SignUpScreen({ navigation }: any) {
                         // some other error happened
                     }
                 } else {
+                    console.error(error);
                     // an error that's not related to google sign in occurred
                 }
             }
