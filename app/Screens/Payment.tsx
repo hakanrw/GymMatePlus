@@ -18,8 +18,7 @@ import { AppContext } from '@/contexts/PingContext';
 const Payment = () => {
     const route = useRoute();
     const gym = (route.params as any)?.gym ?? { name: 'Unknown Gym', price: 0 };
-
-    const { ping } = useContext(AppContext);
+    const navigation = useNavigation() as any;
 
     const submitPayment = () => {
         const selectGymAndPayment = httpsCallable(functions, 'selectGymAndPayment');
@@ -28,7 +27,7 @@ const Payment = () => {
             paymentInfo: "AAAA-AAAA-AAAA-AAAA"
         }).then((value) => {
             console.log(value);
-            ping();
+            navigation.navigate("PaymentSuccess");
         }).catch((error) => {
             console.error(error);
         });

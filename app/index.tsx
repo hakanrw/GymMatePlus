@@ -30,6 +30,7 @@ import { auth } from './firebaseConfig';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from '@firebase/firestore';
 import SignUpScreen from './Screens/SignUp';
+import PaymentSuccess from './Screens/PaymentSuccess';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -56,6 +57,7 @@ function GymSelectionStack() {
             <Stack.Screen name="WelcomeScreen" component={Welcome} options={{ headerShown: false }} />
             <Stack.Screen name="GymSelection" component={GymSelection} options={{ headerShown: false }} />
             <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false }} />
+            <Stack.Screen name="PaymentSuccess" component={PaymentSuccess} options={{ headerShown: false }} />
         </Stack.Navigator>
     );
 }
@@ -72,7 +74,7 @@ export default function App() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
     const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
-    const [gym, setGym] = useState<number | null>(null);
+    const [gym, setGym] = useState<number | null>(-1);
     
     const [pingTrigger, setPingTrigger] = useState(false); // or use a counter (number)
     const togglePing = () => setPingTrigger(prev => !prev); // toggles between true/false
@@ -106,12 +108,10 @@ export default function App() {
           getDoc(docRef).then(docSnap => {
             setGym(docSnap.data()?.gym);
           });
-        } else {
-          setGym(null);
         }
     }, [user, onboardingComplete, pingTrigger]);
   
-    if (loading || (user && onboardingComplete === null)) return null;
+    if (loading || (user && onboardingComplete === null) || (user && onboardingComplete && gym === -1)) return null;
 
     return (
       <AppContext.Provider value={{ping: togglePing}}>
