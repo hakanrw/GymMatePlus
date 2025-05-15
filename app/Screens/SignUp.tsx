@@ -12,8 +12,9 @@ import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons';
 import { Dumbell } from '@/components/Dumbell';
 import { getAuth, GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { auth, firestore } from '../firebaseConfig';
 import { GoogleSignin, isErrorWithCode, isSuccessResponse, SignInSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
+import { doc, setDoc, getDoc, updateDoc } from '@firebase/firestore';
 
 function SignUpScreen({ navigation }: any) {
     const [email, setEmail] = useState('');
@@ -26,9 +27,37 @@ function SignUpScreen({ navigation }: any) {
             const provider = new GoogleAuthProvider();
             provider.addScope('profile');
             provider.addScope('email');
-            signInWithPopup(getAuth(), provider);
-        }
-        else {
+            try {
+                const result = await signInWithPopup(getAuth(), provider);
+                const user = result.user;
+                
+                // Store user data in Firestore
+                const userRef = doc(firestore, 'users', user.uid);
+                const userDoc = await getDoc(userRef);
+                
+                if (!userDoc.exists()) {
+                    // Only set initial data if the document doesn't exist
+                    await setDoc(userRef, {
+                        displayName: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        onBoardingComplete: false,
+                        createdAt: new Date(),
+                    });
+                } else {
+                    // Update only the profile information if the document exists
+                    await updateDoc(userRef, {
+                        displayName: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                    });
+                }
+                
+                console.log("Successfully signed in with Google");
+            } catch (error) {
+                console.error("Error signing in with Google:", error);
+            }
+        } else {
             GoogleSignin.configure({
                 scopes: ['profile', 'email']
             });
@@ -41,22 +70,45 @@ function SignUpScreen({ navigation }: any) {
                         tokens.idToken,
                         tokens.accessToken
                     );
-                    await signInWithCredential(getAuth(), credential);
+                    const result = await signInWithCredential(getAuth(), credential);
+                    const user = result.user;
+                    
+                    // Store user data in Firestore
+                    const userRef = doc(firestore, 'users', user.uid);
+                    const userDoc = await getDoc(userRef);
+                    
+                    if (!userDoc.exists()) {
+                        // Only set initial data if the document doesn't exist
+                        await setDoc(userRef, {
+                            displayName: user.displayName,
+                            email: user.email,
+                            photoURL: user.photoURL,
+                            onBoardingComplete: false,
+                            createdAt: new Date(),
+                        });
+                    } else {
+                        // Update only the profile information if the document exists
+                        await updateDoc(userRef, {
+                            displayName: user.displayName,
+                            email: user.email,
+                            photoURL: user.photoURL,
+                        });
+                    }
                     console.log("Success");
                 } else {
                     console.error("Fail response");
                 }
             } catch (error) {
                 if (isErrorWithCode(error)) {
-                switch (error.code) {
-                    case statusCodes.IN_PROGRESS:
-                        // operation (eg. sign in) already in progress
-                        break;
-                    case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-                        // Android only, play services not available or outdated
-                        break;
-                    default:
-                        console.error(error);
+                    switch (error.code) {
+                        case statusCodes.IN_PROGRESS:
+                            // operation (eg. sign in) already in progress
+                            break;
+                        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+                            // Android only, play services not available or outdated
+                            break;
+                        default:
+                            console.error(error);
                     }
                 } else {
                     console.error(error);

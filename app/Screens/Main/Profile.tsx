@@ -7,7 +7,8 @@ import {
     Dimensions,
     ScrollView,
     Image,
-    ImageBackground
+    ImageBackground,
+    Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Container } from '@/components/Container';
@@ -16,6 +17,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { auth } from '../../firebaseConfig';
 import { doc, getDoc, getFirestore } from '@firebase/firestore';
 import { MainButton } from '@/components/MainButton';
+import { signOut } from 'firebase/auth';
 
 const Profile = () => {
     const navigation = useNavigation() as any;
@@ -44,6 +46,17 @@ const Profile = () => {
 
         fetchUserData();
     }, []);
+
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            // Navigation will be handled by the auth state listener in App.tsx
+        } catch (error) {
+            console.error('Error signing out:', error);
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+        }
+    };
 
     const toggleTab = (tab: 'BMI' | 'Muscle') => {
         setSelectedTabs(prev => ({ ...prev, [tab]: !prev[tab] }));
@@ -180,6 +193,15 @@ const Profile = () => {
                         ))}
                     </View>
                 </View>
+
+                {/* Sign Out Button */}
+                <TouchableOpacity 
+                    style={styles.signOutButton}
+                    onPress={handleSignOut}
+                >
+                    <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                    <Text style={styles.signOutText}>Sign Out</Text>
+                </TouchableOpacity>
             </ScrollView>
         </Container>
     );
@@ -321,5 +343,23 @@ const styles = StyleSheet.create({
     goalChipText: {
         fontSize: 14,
         color: '#333',
+    },
+    signOutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        padding: 16,
+        marginHorizontal: 16,
+        marginTop: 20,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#FF3B30',
+    },
+    signOutText: {
+        color: '#FF3B30',
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 8,
     },
 });
