@@ -84,6 +84,7 @@ const Chat = () => {
     const [chats, setChats] = useState<ChatData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showMenu, setShowMenu] = useState(false);
 
     useEffect(() => {
         const currentUserId = auth.currentUser?.uid;
@@ -195,7 +196,12 @@ const Chat = () => {
     };
 
     const handleNewChat = () => {
+        setShowMenu(false); // Close menu if open
         navigation.navigate('UserSelection');
+    };
+
+    const toggleMenu = () => {
+        setShowMenu(!showMenu);
     };
 
     if (error) {
@@ -232,11 +238,26 @@ const Chat = () => {
                     <TouchableOpacity style={styles.headerButton}>
                         <Ionicons name="search" size={24} color="#000" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.headerButton}>
+                    <TouchableOpacity 
+                        style={styles.headerButton}
+                        onPress={toggleMenu}
+                    >
                         <Ionicons name="ellipsis-vertical" size={24} color="#000" />
                     </TouchableOpacity>
                 </View>
             </View>
+
+            {showMenu && (
+                <View style={styles.menu}>
+                    <TouchableOpacity 
+                        style={styles.menuItem}
+                        onPress={handleNewChat}
+                    >
+                        <Ionicons name="person-add-outline" size={20} color="#000" />
+                        <Text style={styles.menuItemText}>Start a New Chat</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             <FlatList
                 data={chats}
@@ -377,5 +398,34 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    menu: {
+        position: 'absolute',
+        top: 60,
+        right: 16,
+        backgroundColor: 'white',
+        borderRadius: 8,
+        padding: 8,
+        zIndex: 1000,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 4,
+    },
+    menuItemText: {
+        marginLeft: 12,
+        fontSize: 16,
     },
 });

@@ -50,21 +50,40 @@ const UserSelection = () => {
         try {
             console.log('Fetching users...');
             const db = getFirestore();
+            
+            // First get all users who have completed onboarding
             const usersQuery = query(
                 collection(db, 'users'),
                 where('onBoardingComplete', '==', true)
             );
             const snapshot = await getDocs(usersQuery);
             console.log('Number of users found:', snapshot.size);
+
+            // Get all existing conversations for current user
+            const conversationsQuery = query(
+                collection(db, 'conversations'),
+                where('participants', 'array-contains', auth.currentUser?.uid)
+            );
+            const conversationsSnapshot = await getDocs(conversationsQuery);
+            
+            // Create a Set of user IDs that we already have conversations with
+            const existingChatUserIds = new Set();
+            conversationsSnapshot.forEach(doc => {
+                const data = doc.data();
+                data.participants.forEach((participantId: string) => {
+                    if (participantId !== auth.currentUser?.uid) {
+                        existingChatUserIds.add(participantId);
+                    }
+                });
+            });
             
             const usersList: User[] = [];
             
             snapshot.forEach(doc => {
                 try {
                     const data = doc.data();
-                    console.log('User data:', { id: doc.id, ...data });
-                    // Don't include current user
-                    if (doc.id !== auth.currentUser?.uid) {
+                    // Don't include current user and users we already have chats with
+                    if (doc.id !== auth.currentUser?.uid && !existingChatUserIds.has(doc.id)) {
                         usersList.push({
                             id: doc.id,
                             displayName: data.displayName || 'Unknown User',
@@ -82,7 +101,6 @@ const UserSelection = () => {
             setFilteredUsers(usersList);
         } catch (error) {
             console.error('Error fetching users:', error);
-            // Log more details about the error
             if (error instanceof Error) {
                 console.error('Error name:', error.name);
                 console.error('Error message:', error.message);
@@ -93,12 +111,39 @@ const UserSelection = () => {
         }
     };
 
-    const handleUserSelect = (user: User) => {
+    const handleUserSelect = async (user: User) => {
+        if (!auth.currentUser) return;
+
+        const db = getFirestore();
+        
+        // Check if chat already exists
+        const existingChatsQuery = query(
+            collection(db, 'conversations'),
+            where('participants', 'array-contains', auth.currentUser.uid)
+        );
+        
+        const existingChats = await getDocs(existingChatsQuery);
+        const existingChat = existingChats.docs.find(doc => {
+            const data = doc.data();
+            return data.participants.includes(user.id);
+        });
+
+        if (existingChat) {
+            // Navigate to existing chat
+            navigation.navigate('ChatRoom', {
+                chatId: existingChat.id,
+                name: user.displayName,
+                photoURL: user.photoURL
+            });
+            return;
+        }
+
+        // Create new chat if none exists
         navigation.navigate('ChatRoom', {
-            chatId: undefined, // Will be created in Chat screen
+            chatId: undefined,
             name: user.displayName,
             photoURL: user.photoURL,
-            userId: user.id, // Pass the selected user's ID
+            userId: user.id,
         });
     };
 

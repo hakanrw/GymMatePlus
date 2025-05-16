@@ -31,25 +31,14 @@ function SignUpScreen({ navigation }: any) {
                 const result = await signInWithPopup(getAuth(), provider);
                 const user = result.user;
                 
-                // Store user data in Firestore
+                // Store minimal user data in Firestore
                 const userRef = doc(firestore, 'users', user.uid);
                 const userDoc = await getDoc(userRef);
                 
                 if (!userDoc.exists()) {
-                    // Only set initial data if the document doesn't exist
+                    // Only create the document, profile setup will handle the rest
                     await setDoc(userRef, {
-                        displayName: user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
                         onBoardingComplete: false,
-                        createdAt: new Date(),
-                    });
-                } else {
-                    // Update only the profile information if the document exists
-                    await updateDoc(userRef, {
-                        displayName: user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
                     });
                 }
                 
@@ -58,12 +47,14 @@ function SignUpScreen({ navigation }: any) {
                 console.error("Error signing in with Google:", error);
             }
         } else {
-            GoogleSignin.configure({
-                scopes: ['profile', 'email']
-            });
             try {
+                GoogleSignin.configure({
+                    scopes: ['profile', 'email']
+                });
+                
                 await GoogleSignin.hasPlayServices();
                 const response = await GoogleSignin.signIn();
+                
                 if (isSuccessResponse(response)) {
                     const tokens = await GoogleSignin.getTokens();
                     const credential = GoogleAuthProvider.credential(
@@ -73,46 +64,34 @@ function SignUpScreen({ navigation }: any) {
                     const result = await signInWithCredential(getAuth(), credential);
                     const user = result.user;
                     
-                    // Store user data in Firestore
+                    // Store minimal user data in Firestore
                     const userRef = doc(firestore, 'users', user.uid);
                     const userDoc = await getDoc(userRef);
                     
                     if (!userDoc.exists()) {
-                        // Only set initial data if the document doesn't exist
+                        // Only create the document, profile setup will handle the rest
                         await setDoc(userRef, {
-                            displayName: user.displayName,
-                            email: user.email,
-                            photoURL: user.photoURL,
                             onBoardingComplete: false,
-                            createdAt: new Date(),
-                        });
-                    } else {
-                        // Update only the profile information if the document exists
-                        await updateDoc(userRef, {
-                            displayName: user.displayName,
-                            email: user.email,
-                            photoURL: user.photoURL,
                         });
                     }
-                    console.log("Success");
+                    console.log("Successfully signed in with Google on mobile");
                 } else {
-                    console.error("Fail response");
+                    console.error("Failed to sign in with Google on mobile");
                 }
             } catch (error) {
                 if (isErrorWithCode(error)) {
                     switch (error.code) {
                         case statusCodes.IN_PROGRESS:
-                            // operation (eg. sign in) already in progress
+                            console.error("Sign in already in progress");
                             break;
                         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-                            // Android only, play services not available or outdated
+                            console.error("Play services not available");
                             break;
                         default:
-                            console.error(error);
+                            console.error("Error:", error);
                     }
                 } else {
-                    console.error(error);
-                    // an error that's not related to google sign in occurred
+                    console.error("Unknown error:", error);
                 }
             }
         }
