@@ -35,5 +35,20 @@
       "port": 7001
     },
     "singleProjectMode": true
+  },
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "predeploy": ["npx expo export --platform web"]
   }
 }

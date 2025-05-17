@@ -17,7 +17,7 @@ service cloud.firestore {
       allow write: if false; // Only firebase-functions can create user data
 
       allow update: if isOwner(userId) &&
-                    isOnlyUpdatingHeightAndWeight();
+                    isOnlyUpdatingAllowed();
 
       function isOnlyUpdatingAllowed() {
         let newData = request.resource.data;
