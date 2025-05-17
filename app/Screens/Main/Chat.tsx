@@ -307,11 +307,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: '#f0f0f0',
+        backgroundColor: '#fff',
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: 'bold',
+        color: '#11181C',
     },
     headerActions: {
         flexDirection: 'row',
@@ -323,7 +325,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: '#f0f0f0',
+        backgroundColor: '#fff',
     },
     avatar: {
         marginRight: 16,
@@ -338,15 +341,16 @@ const styles = StyleSheet.create({
     },
     chatName: {
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '600',
+        color: '#11181C',
     },
     chatTime: {
         fontSize: 12,
-        color: '#666',
+        color: '#687076',
     },
     lastMessage: {
         fontSize: 14,
-        color: '#666',
+        color: '#687076',
     },
     fab: {
         position: 'absolute',
@@ -355,7 +359,7 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#007AFF',
+        backgroundColor: '#000',
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
@@ -379,7 +383,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     errorText: {
-        color: 'red',
+        color: '#FF3B30',
         fontSize: 16,
         textAlign: 'center',
     },
@@ -396,11 +400,11 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: '#666',
+        color: '#687076',
         marginBottom: 20,
     },
     startChatButton: {
-        backgroundColor: '#007AFF',
+        backgroundColor: '#000',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 20,
@@ -414,8 +418,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 60,
         right: 16,
-        backgroundColor: 'white',
-        borderRadius: 8,
+        backgroundColor: '#fff',
+        borderRadius: 12,
         padding: 8,
         zIndex: 1000,
         elevation: 5,
@@ -427,16 +431,18 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         borderWidth: 1,
-        borderColor: '#eee',
+        borderColor: '#f0f0f0',
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        borderRadius: 4,
+        borderRadius: 8,
     },
     menuItemText: {
         marginLeft: 12,
         fontSize: 16,
+        color: '#11181C',
+        fontWeight: '500',
     },
 });

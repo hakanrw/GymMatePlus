@@ -17,6 +17,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/app/types/navigation';
 import { GifPicker } from '../../../components/GifPicker';
 import { auth } from '../../firebaseConfig';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { 
     collection, 
     query, 
@@ -63,7 +67,10 @@ const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
                     resizeMode="contain"
                 />
             )}
-            <Text style={styles.timestamp}>
+            <Text style={[
+                styles.timestamp,
+                isCurrentUser ? styles.userTimestamp : styles.otherTimestamp
+            ]}>
                 {message.timestamp.toLocaleTimeString([], { 
                     hour: '2-digit', 
                     minute: '2-digit' 
@@ -77,11 +84,22 @@ const ChatRoom: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute<Props['route']>();
     const { chatId, name, photoURL, userId } = route.params;
+    const colorScheme = useColorScheme() ?? 'light';
+    const theme = Colors[colorScheme];
     
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
     const [isGifPickerVisible, setIsGifPickerVisible] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const flatListRef = React.useRef<FlatList>(null);
+
+    const scrollToBottom = (animated: boolean = true) => {
+        if (flatListRef.current && messages.length > 0) {
+            setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated });
+            }, animated ? 100 : 500);
+        }
+    };
 
     useEffect(() => {
         const initializeChat = async () => {
@@ -138,6 +156,17 @@ const ChatRoom: React.FC = () => {
                 });
             });
             setMessages(messageData);
+            
+            // Handle initial load differently
+            if (isInitialLoad) {
+                setIsInitialLoad(false);
+                // Multiple scroll attempts for initial load
+                scrollToBottom(false);
+                setTimeout(() => scrollToBottom(false), 300);
+                setTimeout(() => scrollToBottom(false), 600);
+            } else {
+                scrollToBottom(true);
+            }
         });
 
         return () => unsubscribe();
@@ -159,10 +188,10 @@ const ChatRoom: React.FC = () => {
             // Add message to subcollection
             await addDoc(collection(db, `conversations/${chatId}/messages`), messageData);
 
-            // Update last message in conversation
+            // Update last message in conversation with appropriate text for GIFs
             await updateDoc(doc(db, 'conversations', chatId), {
                 lastMessage: {
-                    text,
+                    text: type === 'gif' ? '<gif>' : text,
                     timestamp: serverTimestamp(),
                     senderId: auth.currentUser.uid,
                 },
@@ -185,22 +214,22 @@ const ChatRoom: React.FC = () => {
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
-                    <Ionicons name="arrow-back" size={24} color="#007AFF" />
+                    <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
                 <View style={styles.headerInfo}>
                     {photoURL ? (
                         <Image source={{ uri: photoURL }} style={styles.headerAvatar} />
                     ) : (
-                        <Ionicons name="person-circle-outline" size={40} color="#666" />
+                        <Ionicons name="person-circle-outline" size={40} color="#687076" />
                     )}
                     <Text style={styles.headerName}>{name}</Text>
                 </View>
                 <View style={styles.headerActions}>
                     <TouchableOpacity style={styles.headerButton}>
-                        <Ionicons name="videocam" size={24} color="#007AFF" />
+                        <Ionicons name="videocam" size={24} color="#000" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.headerButton}>
-                        <Ionicons name="call" size={22} color="#007AFF" />
+                        <Ionicons name="call" size={22} color="#000" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -215,9 +244,22 @@ const ChatRoom: React.FC = () => {
                 contentContainerStyle={styles.messagesList}
                 showsVerticalScrollIndicator={false}
                 onContentSizeChange={() => {
-                    if (messages.length > 0) {
-                        flatListRef.current?.scrollToEnd({ animated: true });
+                    if (!isInitialLoad) {
+                        scrollToBottom();
                     }
+                }}
+                onLayout={() => {
+                    if (isInitialLoad) {
+                        scrollToBottom(false);
+                    }
+                }}
+                initialNumToRender={20}
+                maxToRenderPerBatch={20}
+                windowSize={21}
+                removeClippedSubviews={false}
+                maintainVisibleContentPosition={{
+                    minIndexForVisible: 0,
+                    autoscrollToTopThreshold: 10
                 }}
             />
 
@@ -230,11 +272,12 @@ const ChatRoom: React.FC = () => {
                         style={styles.attachButton}
                         onPress={() => setIsGifPickerVisible(true)}
                     >
-                        <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
+                        <Ionicons name="add-circle-outline" size={24} color="#000" />
                     </TouchableOpacity>
                     <TextInput
                         style={styles.input}
                         placeholder="Type a message..."
+                        placeholderTextColor="#687076"
                         multiline
                         value={inputText}
                         onChangeText={setInputText}
@@ -248,7 +291,7 @@ const ChatRoom: React.FC = () => {
                         <Ionicons 
                             name="send" 
                             size={24} 
-                            color={inputText.trim() ? "#007AFF" : "#A8A8A8"} 
+                            color={inputText.trim() ? "#000" : "#687076"} 
                         />
                     </TouchableOpacity>
                 </View>
@@ -275,7 +318,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: '#f0f0f0',
+        backgroundColor: '#fff',
     },
     backButton: {
         padding: 5,
@@ -288,7 +332,8 @@ const styles = StyleSheet.create({
     },
     headerName: {
         fontSize: 17,
-        fontWeight: 'bold',
+        fontWeight: '600',
+        color: '#11181C',
     },
     headerActions: {
         flexDirection: 'row',
@@ -300,7 +345,7 @@ const styles = StyleSheet.create({
     },
     chatContainer: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#f8f9fa',
     },
     messagesList: {
         padding: 10,
@@ -313,33 +358,42 @@ const styles = StyleSheet.create({
     },
     userMessage: {
         alignSelf: 'flex-end',
-        backgroundColor: '#007AFF',
+        backgroundColor: '#000',
         borderBottomRightRadius: 4,
     },
     otherMessage: {
         alignSelf: 'flex-start',
-        backgroundColor: '#E8E8E8',
+        backgroundColor: '#fff',
         borderBottomLeftRadius: 4,
+        borderWidth: 1,
+        borderColor: '#f0f0f0',
     },
     messageText: {
         fontSize: 16,
+        lineHeight: 20,
     },
     userMessageText: {
         color: '#fff',
     },
     otherMessageText: {
-        color: '#000',
+        color: '#11181C',
     },
     timestamp: {
         fontSize: 11,
-        color: '#888',
         marginTop: 4,
         alignSelf: 'flex-end',
     },
+    userTimestamp: {
+        color: 'rgba(255,255,255,0.7)',
+    },
+    otherTimestamp: {
+        color: '#687076',
+    },
     inputContainer: {
         borderTopWidth: 1,
-        borderTopColor: '#eee',
+        borderTopColor: '#f0f0f0',
         padding: 10,
+        backgroundColor: '#fff',
     },
     inputWrapper: {
         flexDirection: 'row',
@@ -352,9 +406,11 @@ const styles = StyleSheet.create({
         flex: 1,
         marginHorizontal: 10,
         padding: 10,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#f8f9fa',
         borderRadius: 20,
         maxHeight: 100,
+        color: '#11181C',
+        fontSize: 16,
     },
     sendButton: {
         padding: 5,
