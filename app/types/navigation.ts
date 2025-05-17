@@ -11,6 +11,9 @@ export type RootStackParamList = {
         photoURL?: string;
         userId?: string;
     };
+    UserProfile: {
+        userId: string;
+    };
     // Add other screen params here
 };
 

@@ -26,6 +26,10 @@ const QR = () => {
     const [scanned, setScanned] = useState(false);
     const [torch, setTorch] = useState(false);
 
+    useEffect(() => {
+        requestPermission();
+    }, []);
+
     if (!permission) {
         return (
             <Container style={styles.container}>
@@ -40,9 +44,9 @@ const QR = () => {
                 <Text style={styles.text}>No access to camera</Text>
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={requestPermission}
+                    onPress={() => navigation.goBack()}
                 >
-                    <Text style={styles.buttonText}>Grant Permission</Text>
+                    <Text style={styles.buttonText}>Go Back</Text>
                 </TouchableOpacity>
             </Container>
         );

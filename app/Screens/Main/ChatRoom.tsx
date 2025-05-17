@@ -35,6 +35,7 @@ import {
 } from '@firebase/firestore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatRoom'>;
+type NavigationProp = Props['navigation'];
 
 interface Message {
     id: string;
@@ -81,7 +82,7 @@ const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
 };
 
 const ChatRoom: React.FC = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
     const route = useRoute<Props['route']>();
     const { chatId, name, photoURL, userId } = route.params;
     const colorScheme = useColorScheme() ?? 'light';
@@ -116,11 +117,13 @@ const ChatRoom: React.FC = () => {
                     participantInfo: {
                         [auth.currentUser.uid]: {
                             name: auth.currentUser.displayName || 'You',
-                            photoURL: auth.currentUser.photoURL
+                            photoURL: auth.currentUser.photoURL,
+                            userId: auth.currentUser.uid
                         },
                         [userId]: {
                             name: name,
-                            photoURL: photoURL
+                            photoURL: photoURL,
+                            userId: userId
                         }
                     }
                 });
@@ -142,6 +145,30 @@ const ChatRoom: React.FC = () => {
             orderBy('timestamp', 'asc')
         );
 
+        // First, get the conversation document to get the participant info
+        const fetchParticipantInfo = async () => {
+            try {
+                const conversationDoc = await getDoc(doc(db, 'conversations', chatId));
+                if (conversationDoc.exists()) {
+                    const data = conversationDoc.data();
+                    const otherParticipantId = data.participants.find(
+                        (id: string) => id !== auth.currentUser?.uid
+                    );
+                    if (otherParticipantId && !userId) {
+                        navigation.setParams({ 
+                            userId: otherParticipantId,
+                            name: data.participantInfo[otherParticipantId].name,
+                            photoURL: data.participantInfo[otherParticipantId].photoURL
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching participant info:', error);
+            }
+        };
+
+        fetchParticipantInfo();
+
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const messageData: Message[] = [];
             snapshot.forEach((doc) => {
@@ -160,7 +187,6 @@ const ChatRoom: React.FC = () => {
             // Handle initial load differently
             if (isInitialLoad) {
                 setIsInitialLoad(false);
-                // Multiple scroll attempts for initial load
                 scrollToBottom(false);
                 setTimeout(() => scrollToBottom(false), 300);
                 setTimeout(() => scrollToBottom(false), 600);
@@ -216,21 +242,28 @@ const ChatRoom: React.FC = () => {
                 >
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <View style={styles.headerInfo}>
+                <TouchableOpacity 
+                    style={styles.headerInfo}
+                    onPress={() => {
+                        console.log('Attempting to navigate to UserProfile');
+                        console.log('userId:', userId);
+                        if (userId) {
+                            console.log('Navigating to UserProfile with userId:', userId);
+                            navigation.navigate('UserProfile', { userId });
+                        } else {
+                            console.log('userId is undefined, not navigating');
+                        }
+                    }}
+                >
                     {photoURL ? (
                         <Image source={{ uri: photoURL }} style={styles.headerAvatar} />
                     ) : (
                         <Ionicons name="person-circle-outline" size={40} color="#687076" />
                     )}
                     <Text style={styles.headerName}>{name}</Text>
-                </View>
+                </TouchableOpacity>
                 <View style={styles.headerActions}>
-                    <TouchableOpacity style={styles.headerButton}>
-                        <Ionicons name="videocam" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.headerButton}>
-                        <Ionicons name="call" size={22} color="#000" />
-                    </TouchableOpacity>
+                    {/* Removed video and voice call buttons */}
                 </View>
             </View>
 

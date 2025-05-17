@@ -146,7 +146,9 @@ const Home = () => {
                 </View>
 
                 <View style={styles.program}>
-                    <Image source={require('../../../assets/images/program.png')} style={{width: '100%', height: '100%', borderRadius: 10}}/>
+                    <TouchableOpacity style={{width: '100%', height: '100%'}} onPress={() => navigation.navigate('Calendar')}>
+                        <Image source={require('../../../assets/images/program.png')} style={{width: '100%', height: '100%', borderRadius: 10}}/>
+                    </TouchableOpacity>
                 </View>
 
                 <Text style={styles.title}>
