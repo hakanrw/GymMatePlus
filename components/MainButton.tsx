@@ -9,19 +9,21 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    ViewStyle,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 type MainButtonProp = {
     onPress: () => void,
-    text: string
+    text: string,
+    style?: ViewStyle
 };
 
 export const MainButton = (data: MainButtonProp) => {
     return (
         <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, data.style]}
             onPress={data.onPress}>
                 <Text style={styles.text}>{data.text}</Text>
         </TouchableOpacity>

@@ -15,11 +15,27 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-export const Search = () => {
+interface SearchProps {
+    onSearch: (searchText: string) => void;
+}
+
+export const Search: React.FC<SearchProps> = ({ onSearch }) => {
+    const [searchText, setSearchText] = useState('');
+
+    const handleTextChange = (text: string) => {
+        setSearchText(text);
+        onSearch(text);
+    };
+
     return (
         <View style={styles.container}>
             <FontAwesome name="search" size={25} color={'#aaa'}/>
-            <TextInput style={styles.input} placeholder='Search'/>
+            <TextInput 
+                style={styles.input} 
+                placeholder='Search users...'
+                value={searchText}
+                onChangeText={handleTextChange}
+            />
         </View>
     );
 }

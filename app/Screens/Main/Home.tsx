@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -17,12 +17,84 @@ import { Container } from '@/components/Container';
 import { Dumbell } from '@/components/Dumbell';
 import { Search } from '@/components/SearchBar';
 import { FontAwesome } from '@expo/vector-icons';
+import { collection, query, where, getDocs, FirestoreError } from '@firebase/firestore';
+import { firestore, auth } from '../../firebaseConfig';
+
+interface User {
+    id: string;
+    displayName: string;
+    photoURL: string;
+    email: string;
+}
 
 const Home = () => {
     const navigation = useNavigation() as any;
+    const [searchResults, setSearchResults] = useState<User[]>([]);
+    const [showResults, setShowResults] = useState(false);
+    const searchContainerRef = useRef<View>(null);
 
-    const handleContinue = () => {
-        navigation.navigate('GymSelection');
+    useEffect(() => {
+        const handleClickOutside = (event: any) => {
+            // For web platform
+            if (Platform.OS === 'web') {
+                const target = event.target as HTMLElement;
+                if (searchContainerRef.current && !target.closest('[data-search-container]')) {
+                    setShowResults(false);
+                }
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            document.addEventListener('click', handleClickOutside);
+            return () => {
+                document.removeEventListener('click', handleClickOutside);
+            };
+        }
+    }, []);
+
+    const handleSearch = async (searchText: string) => {
+        if (searchText.length < 2) {
+            setSearchResults([]);
+            setShowResults(false);
+            return;
+        }
+
+        try {
+            const usersRef = collection(firestore, 'users');
+            const querySnapshot = await getDocs(usersRef);
+            const users: User[] = [];
+            const currentUserEmail = auth.currentUser?.email;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (
+                    data.displayName &&
+                    data.displayName.toLowerCase().includes(searchText.toLowerCase()) &&
+                    data.email !== currentUserEmail // Exclude self
+                ) {
+                    users.push({
+                        id: doc.id,
+                        displayName: data.displayName,
+                        photoURL: data.photoURL || '',
+                        email: data.email || ''
+                    });
+                }
+            });
+
+            setSearchResults(users);
+            setShowResults(true);
+        } catch (error) {
+            console.error('Error searching users:', error);
+            if (error instanceof FirestoreError) {
+                console.error('Firestore error details:', error.message);
+            }
+        }
+    };
+
+    const handleUserSelect = (user: User) => {
+        setShowResults(false);
+        console.log('handleUserSelect called with user:', user);
+        console.log('Navigating to UserProfile with userId:', user.id);
+        navigation.navigate('UserProfile', { userId: user.id });
     };
 
     const areaValues = [
@@ -39,9 +111,40 @@ const Home = () => {
     ];
 
     return (
-        <Container >
-            <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false}>
-                <Search />
+        <Container style={{ position: 'relative' }}>
+            <ScrollView 
+                showsVerticalScrollIndicator={false} 
+                showsHorizontalScrollIndicator={false}
+                style={{ position: 'relative', zIndex: 1 }}
+            >
+                <View 
+                    ref={searchContainerRef}
+                    data-search-container
+                    style={styles.searchContainer}
+                >
+                    <Search onSearch={handleSearch} />
+                    {showResults && searchResults.length > 0 && (
+                        <View style={styles.searchResults}>
+                            {searchResults.map((user) => (
+                                <TouchableOpacity
+                                    key={user.id}
+                                    style={styles.searchResultItem}
+                                    onPress={() => handleUserSelect(user)}
+                                >
+                                    <Image
+                                        source={{ uri: user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
+                                        style={styles.userAvatar}
+                                    />
+                                    <View style={styles.userInfo}>
+                                        <Text style={styles.userName}>{user.displayName}</Text>
+                                        <Text style={styles.userEmail}>{user.email}</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
+                </View>
+
                 <View style={styles.program}>
                     <Image source={require('../../../assets/images/program.png')} style={{width: '100%', height: '100%', borderRadius: 10}}/>
                 </View>
@@ -85,11 +188,66 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
+    searchContainer: {
+        position: 'relative',
+        zIndex: 1000,
+        marginBottom: 20,
+        backgroundColor: 'transparent',
+    },
+    searchResults: {
+        position: 'absolute',
+        top: '100%',
+        left: 16,
+        right: 16,
+        backgroundColor: 'white',
+        borderRadius: 8,
+        marginTop: 4,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        maxHeight: 300,
+        zIndex: 1001,
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    searchResultItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        backgroundColor: 'white',
+    },
+    userAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 12,
+    },
+    userInfo: {
+        flex: 1,
+    },
+    userName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#000',
+    },
+    userEmail: {
+        fontSize: 14,
+        color: '#666',
+    },
     program: {
         height: 150,
         borderRadius: 10,
         marginVertical: 40,
         marginBottom: 20,
+        position: 'relative',
+        zIndex: 1,
     },
     title: {
         fontSize: 20,

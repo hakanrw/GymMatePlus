@@ -33,6 +33,7 @@ import SignUpScreen from './Screens/SignUp';
 import ChatRoom from './Screens/ChatRoom';
 import PaymentSuccess from './Screens/PaymentSuccess';
 import UserSelection from './Screens/UserSelection';
+import UserProfile from './Screens/Main/UserProfile';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -83,6 +84,11 @@ function AppStack() {
                     headerShown: false,
                     presentation: 'card'
                 }} 
+            />
+            <Stack.Screen
+                name="UserProfile"
+                component={UserProfile}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );
