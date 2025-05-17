@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Container } from '@/components/Container';
-import { auth } from '../firebaseConfig';
+import { auth } from '../../firebaseConfig';
 import { collection, query, getFirestore, getDocs, where } from '@firebase/firestore';
 
 interface User {

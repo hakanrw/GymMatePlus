@@ -33,7 +33,7 @@ const PaymentSuccess = ({ navigation }: any) => {
         <Container style={styles.container}>
             <LottieView
                 ref={animation}
-                source={require('../../assets/animations/success-check.json')}
+                source={require('../../../assets/animations/success-check.json')}
                 autoPlay
                 loop
                 style={styles.lottie}

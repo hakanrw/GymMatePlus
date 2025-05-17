@@ -12,7 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
 import { httpsCallable } from '@firebase/functions';
-import { functions } from '../firebaseConfig';
+import { functions } from '../../firebaseConfig';
 import { AppContext } from '@/contexts/PingContext';
 
 const Payment = () => {
@@ -40,7 +40,7 @@ const Payment = () => {
             <View style={styles.gymInfo}>
                 <View style={styles.logoContainer}>
                     <Image
-                        source={require("../../assets/images/fitness.png")}
+                        source={require("../../../assets/images/fitness.png")}
                         style={styles.logo}
                     />
                 </View>
@@ -60,7 +60,7 @@ const Payment = () => {
                 <View style={[styles.row, {padding: 20, paddingBottom: 0}]}>
                     <Image        
                         style={styles.cardIcon}
-                        source={require('../../assets/images/mc.png')}
+                        source={require('../../../assets/images/mc.png')}
                         resizeMode="contain"
                     />
                     <View style={{flex: 1}}>

@@ -12,7 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { FontAwesome } from '@expo/vector-icons';
 import { Dumbell } from '@/components/Dumbell';
 import { getAuth, GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
-import { auth, firestore } from '../firebaseConfig';
+import { auth, firestore } from '../../firebaseConfig';
 import { GoogleSignin, isErrorWithCode, isSuccessResponse, SignInSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
 import { doc, setDoc, getDoc, updateDoc } from '@firebase/firestore';
 

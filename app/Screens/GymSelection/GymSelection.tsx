@@ -12,11 +12,12 @@ import {useNavigation} from "@react-navigation/native";
 import { MainButton } from '@/components/MainButton';
 import { FontAwesome } from '@expo/vector-icons';
 import { Container } from '@/components/Container';
+import { InformationBubble } from '@/components/InformationBubble';
 
 const gyms = [
     {
         id: 1,
-        name: "Yeditepe Fitness Center .NET",
+        name: "Yeditepe Fitness Center",
         address: "İnönü Mahallesi\nKayışdağı/Ataşehir\n34755",
         image: null,
         price: 999,
@@ -83,7 +84,7 @@ const GymSelection = () => {
             
             {/* Gym Info */}
             <View style={[styles.card, {flexDirection: 'row', alignItems: 'center', marginTop: 30}]}>
-                <Image style={styles.image} source={require('../../assets/images/map.png')} />
+                <Image style={styles.image} source={require('../../../assets/images/map.png')} />
                 <Text style={styles.address}>{selectedGym.address}</Text>
             </View>
 

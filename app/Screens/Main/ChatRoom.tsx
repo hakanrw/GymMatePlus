@@ -15,8 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/app/types/navigation';
-import { GifPicker } from '../../components/GifPicker';
-import { auth } from '../firebaseConfig';
+import { GifPicker } from '../../../components/GifPicker';
+import { auth } from '../../firebaseConfig';
 import { 
     collection, 
     query, 

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -16,17 +16,19 @@ import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
 import { httpsCallable } from '@firebase/functions';
 import { AppContext } from '@/contexts/PingContext';
-import { functions } from '../firebaseConfig';
+import { auth, functions } from '../../firebaseConfig';
+import { InformationBubble } from '@/components/InformationBubble';
 
 const ProfileScreen = () => {
     const { ping } = useContext(AppContext);
     const [selectedGoals, setSelectedGoals] = useState<string[]>(['Lose Weight']);
-    const [selectedAreas, setSelectedAreas] = useState<string[]>(['Chest', 'Biceps', 'Glutes']);
+    const [difficulty, setDifficulty] = useState<string>('Medium');
     const [selectedSex, setSelectedSex] = useState<string>('Female');
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(auth.currentUser?.email as string);
     const [weight, setWeight] = useState('');
     const [height, setHeight] = useState('');
     const [showSexDropdown, setShowSexDropdown] = useState(false);
+    const [status, setStatus] = useState<{status: string, message: string} | null>(null);
 
     const toggleGoal = (goal: string) => {
         if (selectedGoals.includes(goal)) {
@@ -36,15 +38,9 @@ const ProfileScreen = () => {
         }
     };
 
-    const toggleArea = (area: string) => {
-        if (selectedAreas.includes(area)) {
-            setSelectedAreas(selectedAreas.filter(a => a !== area));
-        } else {
-            setSelectedAreas([...selectedAreas, area]);
-        }
-    };
-
     const submitProfile = () => {
+        setStatus({ status: "info", message: "Creating profile..."});
+
         const submitUserProfile = httpsCallable(functions, 'submitUserProfile');
         submitUserProfile({
             weight: Number.parseInt(weight),
@@ -52,12 +48,14 @@ const ProfileScreen = () => {
             sex: selectedSex,
             dateOfBirth: '1997-10-25',
             fitnessGoals: selectedGoals,
-            difficulty: 'Medium'
+            difficulty
         }).then((value) => {
+            setStatus({ status: "success", message: "Success!"});
             console.log(value);
             ping();
         }).catch((error) => {
             console.error(error);
+            setStatus({ status: "error", message: error.message});
         });
     };
 
@@ -68,7 +66,7 @@ const ProfileScreen = () => {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false}>
+                <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={{flex: 1}}>
                     <Text style={styles.title}>Profile Setup</Text>
 
                     {/* Email */}
@@ -77,11 +75,11 @@ const ProfileScreen = () => {
                         <TextInput
                             style={styles.input}
                             value={email}
-                            onChangeText={setEmail}
                             placeholder="your@email.com"
                             placeholderTextColor="#aaa"
                             keyboardType="email-address"
                             autoCapitalize="none"
+                            editable={false}
                         />
                     </View>
 
@@ -228,35 +226,37 @@ const ProfileScreen = () => {
 
                     {/* Workout Areas */}
                     <View style={[styles.section, {paddingBottom: 10}]}>
-                        <Text style={styles.sectionTitle}>Select Areas You Want to Work Out</Text>
+                        <Text style={styles.sectionTitle}>Select Difficulty</Text>
 
                         {[
-                            ['Chest', 'Back', 'Shoulders'],
-                            ['Triceps', 'Biceps', 'Quads'],
-                            ['Hamstrings', 'Glutes', 'Calves'],
-                            ['Abs', 'Obliques', 'Cardio'],
+                            ['Easy', 'Medium', 'Hard'],
                         ].map((row, i) => (
                             <View key={i} style={styles.chipRow}>
-                                {row.map(area => (
+                                {row.map(diff => (
                                     <TouchableOpacity
-                                        key={area}
-                                        onPress={() => toggleArea(area)}
+                                        key={diff}
+                                        onPress={() => setDifficulty(diff)}
                                         style={[
                                             styles.chip,
-                                            selectedAreas.includes(area) && styles.chipSelected
+                                            difficulty == diff && styles.chipSelected
                                         ]}
                                     >
                                         <Text style={[
                                             styles.chipText,
-                                            selectedAreas.includes(area) && styles.chipTextSelected
+                                            difficulty == diff && styles.chipTextSelected
                                         ]}>
-                                            {area}
+                                            {diff}
                                         </Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         ))}
                     </View>
+
+                    {/* Padding */}
+                    <View style={{flex: 1}}></View>
+
+                    { status && <InformationBubble {...status} /> }
 
                     {/* Submit Button */}
                     <MainButton onPress={submitProfile} text="Create Profile"/>

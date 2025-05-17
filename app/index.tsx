@@ -12,11 +12,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FontAwesome } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 
-import Welcome from './Screens/Welcome';
+import Welcome from './Screens/GymSelection/Welcome';
 
-import ProfileScreen from './Screens/ProfileScreen';
-import GymSelection from "@/app/Screens/GymSelection";
-import Payment from "@/app/Screens/Payment";
+import ProfileScreen from './Screens/Onboarding/ProfileScreen';
+import GymSelection from "@/app/Screens/GymSelection/GymSelection";
+import Payment from "@/app/Screens/GymSelection/Payment";
 import { Dumbell } from '@/components/Dumbell';
 import Home from './Screens/Main/Home';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -29,11 +29,11 @@ import { AppContext } from '@/contexts/PingContext';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from '@firebase/firestore';
-import SignUpScreen from './Screens/SignUp';
-import ChatRoom from './Screens/ChatRoom';
-import PaymentSuccess from './Screens/PaymentSuccess';
-import UserSelection from './Screens/UserSelection';
 import UserProfile from './Screens/Main/UserProfile';
+import SignUpScreen from './Screens/Auth/SignUp';
+import ChatRoom from './Screens/Main/ChatRoom';
+import PaymentSuccess from './Screens/GymSelection/PaymentSuccess';
+import UserSelection from './Screens/Main/UserSelection';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
