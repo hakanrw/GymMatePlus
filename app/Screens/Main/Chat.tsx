@@ -108,14 +108,20 @@ const Chat = () => {
                 const chatData: ChatData[] = [];
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    chatData.push({ 
-                        id: doc.id, 
-                        ...data,
-                        lastMessage: {
-                            ...data.lastMessage,
-                            timestamp: data.lastMessage.timestamp?.toDate() || new Date()
-                        }
-                    } as ChatData);
+                    console.log('Chat document data:', data);
+                    try {
+                        chatData.push({ 
+                            id: doc.id, 
+                            ...data,
+                            lastMessage: {
+                                ...data.lastMessage,
+                                timestamp: data.lastMessage.timestamp?.toDate() || new Date()
+                            }
+                        } as ChatData);
+                    } catch (error) {
+                        console.error('Error processing chat document:', error);
+                        console.error('Problematic document data:', data);
+                    }
                 });
                 setChats(chatData);
                 setLoading(false);
@@ -123,7 +129,12 @@ const Chat = () => {
             },
             (error) => {
                 console.error('Error fetching chats:', error);
-                setError('Failed to load chats');
+                console.error('Error details:', {
+                    code: error.code,
+                    message: error.message,
+                    stack: error.stack
+                });
+                setError('Failed to load chats: ' + error.message);
                 setLoading(false);
             }
         );

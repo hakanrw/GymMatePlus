@@ -29,6 +29,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const defaultProfilePic = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
     const [profilePicError, setProfilePicError] = useState(false);
+    const [photoURL, setPhotoURL] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -38,7 +39,17 @@ const Profile = () => {
                 const docRef = doc(getFirestore(), 'users', auth.currentUser.uid);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    setUserData(docSnap.data());
+                    const data = docSnap.data();
+                    console.log('User data from Firestore:', data);
+                    setUserData(data);
+                    
+                    // Handle Google profile photo URL
+                    let photoUrl = data.photoURL || auth.currentUser.photoURL;
+                    if (photoUrl && photoUrl.includes('googleusercontent.com')) {
+                        // Use a different CORS proxy
+                        photoUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(photoUrl)}`;
+                    }
+                    setPhotoURL(photoUrl);
                 }
                 setLoading(false);
             }
@@ -95,16 +106,31 @@ const Profile = () => {
                 {/* Profile Picture and User Info */}
                 <View style={styles.profileSection}>
                     <View style={styles.profilePicContainer}>
-                        <Image
-                            source={{ 
-                                uri: auth.currentUser?.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
-                            }}
-                            style={styles.profilePic}
-                            onError={(error) => {
-                                console.log('Image loading error:', error.nativeEvent);
-                                setProfilePicError(true);
-                            }}
-                        />
+                        {profilePicError ? (
+                            <View style={[styles.profilePic, styles.fallbackProfilePic]}>
+                                <Text style={styles.fallbackProfileText}>
+                                    {auth.currentUser?.displayName?.[0]?.toUpperCase() || 'U'}
+                                </Text>
+                            </View>
+                        ) : (
+                            <Image
+                                source={{ 
+                                    uri: photoURL || defaultProfilePic
+                                }}
+                                style={styles.profilePic}
+                                onError={(error) => {
+                                    console.log('Image loading error:', error.nativeEvent);
+                                    console.log('Failed photo URL:', photoURL);
+                                    // If the proxy fails, try the direct URL
+                                    if (photoURL?.includes('allorigins.win')) {
+                                        const directUrl = decodeURIComponent(photoURL.split('url=')[1]);
+                                        setPhotoURL(directUrl);
+                                    } else {
+                                        setProfilePicError(true);
+                                    }
+                                }}
+                            />
+                        )}
                     </View>
                     <View style={styles.userInfo}>
                         <Text style={styles.userName}>{auth.currentUser?.displayName || 'User'}</Text>
@@ -361,5 +387,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         marginLeft: 8,
+    },
+    fallbackProfilePic: {
+        backgroundColor: '#007AFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fallbackProfileText: {
+        color: '#FFFFFF',
+        fontSize: 32,
+        fontWeight: 'bold',
     },
 });
