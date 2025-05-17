@@ -26,6 +26,7 @@ const ProfileScreen = () => {
     const [email, setEmail] = useState('');
     const [weight, setWeight] = useState('');
     const [height, setHeight] = useState('');
+    const [showSexDropdown, setShowSexDropdown] = useState(false);
 
     const toggleGoal = (goal: string) => {
         if (selectedGoals.includes(goal)) {
@@ -42,7 +43,7 @@ const ProfileScreen = () => {
             setSelectedAreas([...selectedAreas, area]);
         }
     };
-    
+
     const submitProfile = () => {
         const submitUserProfile = httpsCallable(functions, 'submitUserProfile');
         submitUserProfile({
@@ -112,13 +113,78 @@ const ProfileScreen = () => {
                     </View>
 
                     {/* Sex */}
-                    <TouchableOpacity style={styles.row}>
-                        <Text style={styles.label}>SEX</Text>
-                        <View style={styles.rowRight}>
-                            <Text style={styles.value}>Female</Text>
-                            <FontAwesome name="chevron-down" size={12} color="#aaa" style={{ marginLeft: 6 }} />
-                        </View>
-                    </TouchableOpacity>
+                    <View>
+                        <TouchableOpacity
+                            style={styles.row}
+                            onPress={() => setShowSexDropdown(!showSexDropdown)}
+                        >
+                            <Text style={styles.label}>SEX</Text>
+                            <View style={styles.rowRight}>
+                                <Text style={styles.value}>{selectedSex}</Text>
+                                <FontAwesome
+                                    name={showSexDropdown ? "chevron-up" : "chevron-down"}
+                                    size={12}
+                                    color="#aaa"
+                                    style={{ marginLeft: 6 }}
+                                />
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Sex Dropdown Options */}
+                        {showSexDropdown && (
+                            <View style={styles.dropdownContainer}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.dropdownOption,
+                                        selectedSex === 'Female' && styles.dropdownOptionSelected
+                                    ]}
+                                    onPress={() => {
+                                        setSelectedSex('Female');
+                                        setShowSexDropdown(false);
+                                    }}
+                                >
+                                    <Text style={styles.dropdownText}>Female</Text>
+                                    {selectedSex === 'Female' && (
+                                        <FontAwesome name="check" size={14} color="#000" />
+                                    )}
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.dropdownOption,
+                                        selectedSex === 'Male' && styles.dropdownOptionSelected
+                                    ]}
+                                    onPress={() => {
+                                        setSelectedSex('Male');
+                                        setShowSexDropdown(false);
+                                    }}
+                                >
+                                    <Text style={styles.dropdownText}>Male</Text>
+                                    {selectedSex === 'Male' && (
+                                        <FontAwesome name="check" size={14} color="#000" />
+                                    )}
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.dropdownOption,
+                                        selectedSex === 'Other' && styles.dropdownOptionSelected
+                                    ]}
+                                    onPress={() => {
+                                        setSelectedSex('Other');
+                                        setShowSexDropdown(false);
+                                    }}
+                                >
+                                    <Text style={styles.dropdownText}>Other</Text>
+                                    {selectedSex === 'Other' && (
+                                        <FontAwesome name="check" size={14} color="#000" />
+                                    )}
+                                </TouchableOpacity>
+
+
+                            </View>
+                        )}
+                    </View>
 
                     {/* Birth Date */}
                     <TouchableOpacity style={styles.row}>
@@ -203,7 +269,6 @@ const ProfileScreen = () => {
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
-
     title: {
         fontSize: 20,
         fontWeight: 'bold',
@@ -304,4 +369,35 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         flex: 1,
     },
+    dropdownContainer: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#eee',
+        borderRadius: 8,
+        marginHorizontal: 10,
+        marginTop: -5,
+        zIndex: 1000,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    dropdownOption: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    dropdownOptionSelected: {
+        backgroundColor: '#f9f9f9',
+    },
+    dropdownText: {
+        fontSize: 16,
+        color: '#000',
+    },
+
 });
