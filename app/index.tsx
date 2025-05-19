@@ -34,6 +34,8 @@ import SignUpScreen from './Screens/Auth/SignUp';
 import ChatRoom from './Screens/Main/ChatRoom';
 import PaymentSuccess from './Screens/GymSelection/PaymentSuccess';
 import UserSelection from './Screens/Main/UserSelection';
+import CoachCalendar from './Screens/Main/CoachCalendar';
+import ProgramEditor from './Screens/Main/ProgramEditor';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -89,6 +91,22 @@ function AppStack() {
                 name="UserProfile"
                 component={UserProfile}
                 options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="CoachCalendar"
+                component={CoachCalendar}
+                options={{ 
+                    headerShown: false,
+                    presentation: 'modal'
+                }}
+            />
+            <Stack.Screen
+                name="ProgramEditor"
+                component={ProgramEditor}
+                options={{ 
+                    headerShown: false,
+                    presentation: 'modal'
+                }}
             />
         </Stack.Navigator>
     );

@@ -14,6 +14,19 @@ export type RootStackParamList = {
     UserProfile: {
         userId: string;
     };
+    Calendar: undefined;
+    CoachCalendar: undefined;
+    ProgramEditor: {
+        traineeId: string;
+        traineeName: string;
+        currentProgram: {
+            [key: string]: {
+                exercise: string;
+                sets: string;
+                rpe: string;
+            }[];
+        };
+    };
     // Add other screen params here
 };
 

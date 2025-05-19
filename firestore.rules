@@ -11,21 +11,49 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == 'admin';
+    }
+
+    function isCoach() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == 'coach';
+    }
+
+    function isTraineeOfCoach(traineeId) {
+      return isCoach() && 
+        traineeId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.trainees;
+    }
+
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated(); // Any authenticated user can read user profiles
-      allow write: if false; // Only firebase-functions can create user data
+      allow create: if false; // Only firebase-functions can create user data
 
       allow update: if isOwner(userId) &&
-                    isOnlyUpdatingAllowed();
+                    isOnlyUpdatingAllowed() ||
+                    isAdmin() || // Admins can update any user
+                    (isTraineeOfCoach(userId) && isOnlyUpdatingProgram()); // Coaches can update their trainees' programs
+
+      function isOnlyUpdatingProgram() {
+        let newData = request.resource.data;
+        let oldData = resource.data;
+        
+        // Only allow updating the program field
+        return newData.diff(oldData).affectedKeys().hasOnly(['program']);
+      }
 
       function isOnlyUpdatingAllowed() {
         let newData = request.resource.data;
         let oldData = resource.data;
 
-        // Ensure only height and weight are present in the update
+        // Ensure only allowed fields are updated
+        // Regular users can update height and weight
+        // Admins can update all fields including accountType
         return newData.keys().hasOnly(oldData.keys()) && // no new fields added
-               newData.diff(oldData).affectedKeys().hasOnly(['height', 'weight']);
+               (isAdmin() || 
+                newData.diff(oldData).affectedKeys().hasOnly(['height', 'weight']));
       }
     }
 
@@ -56,7 +84,7 @@ service cloud.firestore {
     // Gyms collection
     match /gyms/{gymId} {
       allow read: if isAuthenticated();
-      allow write: if false; // Only admin can modify gyms
+      allow write: if isAdmin(); // Only admin can modify gyms
     }
 
     // Default deny

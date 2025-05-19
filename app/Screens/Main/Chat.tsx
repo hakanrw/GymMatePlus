@@ -29,18 +29,34 @@ interface ChatData {
         [key: string]: {
             name: string;
             photoURL: string;
+            accountType?: string;
+            isCoach?: boolean;
+            isTrainee?: boolean;
         };
     };
 }
 
 interface ChatItemProps {
     chat: ChatData;
+    currentUserType: string;
 }
 
-const ChatItem: React.FC<ChatItemProps> = ({ chat }) => {
+const ChatItem: React.FC<ChatItemProps> = ({ chat, currentUserType }) => {
     const navigation = useNavigation();
     const currentUserId = auth.currentUser?.uid;
     const otherParticipant = Object.entries(chat.participantInfo).find(([id]) => id !== currentUserId)?.[1];
+    
+    // Determine the relationship label
+    const getRelationshipLabel = () => {
+        if (currentUserType === 'coach' && otherParticipant?.isTrainee) {
+            return 'Trainee';
+        } else if (currentUserType === 'user' && otherParticipant?.isCoach) {
+            return 'Coach';
+        }
+        return null;
+    };
+
+    const relationshipLabel = getRelationshipLabel();
     
     return (
         <TouchableOpacity 
@@ -63,7 +79,14 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat }) => {
             </View>
             <View style={styles.chatInfo}>
                 <View style={styles.chatHeader}>
-                    <Text style={styles.chatName}>{otherParticipant?.name || 'Unknown User'}</Text>
+                    <View style={styles.nameContainer}>
+                        <Text style={styles.chatName}>{otherParticipant?.name || 'Unknown User'}</Text>
+                        {relationshipLabel && (
+                            <View style={styles.roleTag}>
+                                <Text style={styles.roleTagText}>{relationshipLabel}</Text>
+                            </View>
+                        )}
+                    </View>
                     <Text style={styles.chatTime}>
                         {chat.lastMessage.timestamp.toLocaleTimeString([], { 
                             hour: '2-digit', 
@@ -72,7 +95,7 @@ const ChatItem: React.FC<ChatItemProps> = ({ chat }) => {
                     </Text>
                 </View>
                 <Text style={styles.lastMessage} numberOfLines={1}>
-                    {chat.lastMessage.text}
+                    {chat.lastMessage.text || 'No messages yet'}
                 </Text>
             </View>
         </TouchableOpacity>
@@ -85,6 +108,7 @@ const Chat = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showMenu, setShowMenu] = useState(false);
+    const [currentUserType, setCurrentUserType] = useState<string>('user');
 
     useEffect(() => {
         const currentUserId = auth.currentUser?.uid;
@@ -94,21 +118,93 @@ const Chat = () => {
             return;
         }
 
-        console.log('Setting up chat listener for user:', currentUserId);
-        const db = getFirestore();
+        // First, get the current user's type and related users
+        const fetchUserDataAndCreateChats = async () => {
+            const db = getFirestore();
+            const userDoc = await getDoc(doc(db, 'users', currentUserId));
+            const userData = userDoc.data();
+            
+            if (!userData) return;
+            
+            setCurrentUserType(userData.accountType || 'user');
+
+            // Create or ensure chats exist based on user type
+            if (userData.accountType === 'coach' && userData.trainees) {
+                // Create chats with all trainees
+                for (const traineeId of userData.trainees) {
+                    await ensureChatExists(currentUserId, traineeId, true);
+                }
+            } else if (userData.accountType === 'user' && userData.coach) {
+                // Create chat with coach
+                await ensureChatExists(currentUserId, userData.coach, false);
+            }
+        };
+
+        const ensureChatExists = async (userId1: string, userId2: string, isCoach: boolean) => {
+            const db = getFirestore();
+            
+            // Check if chat already exists
+            const existingChatsQuery = query(
+                collection(db, 'conversations'),
+                where('participants', 'array-contains', userId1)
+            );
+            
+            const existingChats = await getDocs(existingChatsQuery);
+            const existingChat = existingChats.docs.find((doc: DocumentData) => {
+                const data = doc.data();
+                return data.participants.includes(userId2);
+            });
+
+            if (existingChat) return;
+
+            // Get user data for both participants
+            const user1Doc = await getDoc(doc(db, 'users', userId1));
+            const user2Doc = await getDoc(doc(db, 'users', userId2));
+            const user1Data = user1Doc.data();
+            const user2Data = user2Doc.data();
+
+            // Create new chat
+            await addDoc(collection(db, 'conversations'), {
+                participants: [userId1, userId2],
+                lastMessage: {
+                    text: '',
+                    timestamp: new Date(),
+                    senderId: userId1
+                },
+                participantInfo: {
+                    [userId1]: {
+                        name: user1Data?.displayName || 'Unknown User',
+                        photoURL: user1Data?.photoURL,
+                        accountType: user1Data?.accountType,
+                        isCoach: isCoach,
+                        isTrainee: !isCoach
+                    },
+                    [userId2]: {
+                        name: user2Data?.displayName || 'Unknown User',
+                        photoURL: user2Data?.photoURL,
+                        accountType: user2Data?.accountType,
+                        isCoach: !isCoach,
+                        isTrainee: isCoach
+                    }
+                }
+            });
+        };
+
+        // Fetch user data and create chats
+        fetchUserDataAndCreateChats();
+
+        // Set up real-time chat listener
         const q = query(
-            collection(db, 'conversations'),
+            collection(getFirestore(), 'conversations'),
             where('participants', 'array-contains', currentUserId),
             orderBy('lastMessage.timestamp', 'desc')
         );
 
         const unsubscribe = onSnapshot(q, 
             (snapshot) => {
-                console.log('Received chat snapshot with', snapshot.size, 'documents');
                 const chatData: ChatData[] = [];
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    console.log('Chat document data:', data);
                     try {
                         chatData.push({ 
                             id: doc.id, 
@@ -120,7 +216,6 @@ const Chat = () => {
                         } as ChatData);
                     } catch (error) {
                         console.error('Error processing chat document:', error);
-                        console.error('Problematic document data:', data);
                     }
                 });
                 setChats(chatData);
@@ -129,20 +224,12 @@ const Chat = () => {
             },
             (error) => {
                 console.error('Error fetching chats:', error);
-                console.error('Error details:', {
-                    code: error.code,
-                    message: error.message,
-                    stack: error.stack
-                });
                 setError('Failed to load chats: ' + error.message);
                 setLoading(false);
             }
         );
 
-        return () => {
-            console.log('Cleaning up chat listener');
-            unsubscribe();
-        };
+        return () => unsubscribe();
     }, []);
 
     const createNewChat = async (userId: string) => {
@@ -273,7 +360,7 @@ const Chat = () => {
             <FlatList
                 data={chats}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <ChatItem chat={item} />}
+                renderItem={({ item }) => <ChatItem chat={item} currentUserType={currentUserType} />}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Text style={styles.emptyText}>No conversations yet</Text>
@@ -443,6 +530,23 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         fontSize: 16,
         color: '#11181C',
+        fontWeight: '500',
+    },
+    nameContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    roleTag: {
+        backgroundColor: '#000',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+        marginLeft: 8,
+    },
+    roleTagText: {
+        color: '#fff',
+        fontSize: 12,
         fontWeight: '500',
     },
 });

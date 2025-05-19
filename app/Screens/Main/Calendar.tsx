@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -11,9 +11,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@/app/types/navigation';
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
 import { Dumbell } from '@/components/Dumbell';
+import { doc, getDoc } from '@firebase/firestore';
+import { firestore, auth } from '../../firebaseConfig';
+import CoachCalendar from './CoachCalendar';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Exercise {
     exercise: string;
@@ -25,42 +32,19 @@ type WorkoutProgram = {
     [key: string]: Exercise[];
 };
 
-// Mock workout data structure
-const workoutProgram: WorkoutProgram = {
+// Default program template
+const defaultProgram: WorkoutProgram = {
     Monday: [
         { exercise: 'BB Back Squat', sets: '3x3-5', rpe: '7-8' },
         { exercise: 'Bench Press', sets: '4x4-6', rpe: '7-8' },
-        { exercise: 'Smith Machine OHP', sets: '3x8-12', rpe: '8-10' },
-        { exercise: 'Incline DB Press', sets: '3x8-12', rpe: '8-10' },
-        { exercise: 'Cable Side Raise', sets: '3x10-15', rpe: '10' },
-    ],
-    Tuesday: [
-        { exercise: 'Pause Deadlift', sets: '3x3', rpe: '7-8' },
-        { exercise: 'Pull Ups', sets: '3x4-6', rpe: '7-9' },
-        { exercise: 'Machine Row', sets: '3x8-12', rpe: '8-10' },
-        { exercise: 'Rear Delt Fly', sets: '3x8-15', rpe: '10' },
-        { exercise: 'Face-Away Curl', sets: '2x8-10', rpe: '10' },
     ],
     Wednesday: [
-        { exercise: 'Front Squat', sets: '3x8-12', rpe: '7-9' },
-        { exercise: 'Seated Leg Curl', sets: '3x10-15', rpe: '8-10' },
-        { exercise: 'Leg Extension', sets: '3x10-15', rpe: '8-10' },
-        { exercise: 'Back Extension', sets: '3x8-12', rpe: '8-10' },
-        { exercise: 'Weighted Plank', sets: '3 sets', rpe: '10' },
-    ],
-    Thursday: [
-        { exercise: 'BB OHP', sets: '4x4-6', rpe: '7-9' },
-        { exercise: 'Bench Press', sets: '3x8-12', rpe: '7-8' },
-        { exercise: 'DB Lateral Raise', sets: '3x10-15', rpe: '10' },
-        { exercise: 'Machine Chest Fly', sets: '3x10-15', rpe: '10' },
-        { exercise: 'Triceps Pushdown', sets: '2x10-15', rpe: '10' },
+        { exercise: 'Deadlift', sets: '3x5', rpe: '7-8' },
+        { exercise: 'OHP', sets: '3x8', rpe: '7-8' },
     ],
     Friday: [
-        { exercise: 'Machine Row', sets: '3x8-12', rpe: '8-10' },
-        { exercise: 'Lat Pulldown', sets: '3x8-12', rpe: '8-10' },
-        { exercise: 'Face Pull', sets: '3x10-15', rpe: '10' },
-        { exercise: 'Hammer Curl', sets: '2x10-15', rpe: '10' },
-        { exercise: 'DB Skull Crusher', sets: '2x10-15', rpe: '10' },
+        { exercise: 'Front Squat', sets: '3x8', rpe: '7-8' },
+        { exercise: 'Row', sets: '3x10', rpe: '7-8' },
     ],
 };
 
@@ -85,13 +69,61 @@ const DayCard: React.FC<DayCardProps> = ({ day, exercises }) => (
 );
 
 const Calendar = () => {
-    const navigation = useNavigation() as any;
+    const navigation = useNavigation<NavigationProp>();
+    const [program, setProgram] = useState<WorkoutProgram | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isCoach, setIsCoach] = useState(false);
+
+    useEffect(() => {
+        checkUserAndLoadProgram();
+    }, []);
+
+    const checkUserAndLoadProgram = async () => {
+        if (!auth.currentUser) return;
+
+        try {
+            const userDoc = await getDoc(doc(firestore, 'users', auth.currentUser.uid));
+            const userData = userDoc.data();
+
+            if (userData?.accountType === 'coach') {
+                setIsCoach(true);
+                setLoading(false);
+                return;
+            }
+
+            setProgram(userData?.program || defaultProgram);
+        } catch (error) {
+            console.error('Error loading program:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <Container>
+                <Text>Loading program...</Text>
+            </Container>
+        );
+    }
+
+    if (isCoach) {
+        return <CoachCalendar />;
+    }
+
+    if (!program) {
+        return (
+            <Container>
+                <Text>No program found</Text>
+            </Container>
+        );
+    }
 
     return (
         <Container style={styles.container}>
             <Text style={styles.title}>Weekly Program</Text>
             <ScrollView style={styles.scrollView}>
-                {Object.entries(workoutProgram).map(([day, exercises]) => (
+                {Object.entries(program).map(([day, exercises]) => (
                     <DayCard key={day} day={day} exercises={exercises} />
                 ))}
             </ScrollView>

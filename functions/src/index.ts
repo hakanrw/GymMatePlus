@@ -1,10 +1,10 @@
 // functions/src/index.ts
+import { HttpsError } from 'firebase-functions/v2/https';
+import { setGlobalOptions } from 'firebase-functions/v2';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { onCall } from 'firebase-functions/v2/https';
-import { HttpsError } from 'firebase-functions/v2/https';
-import { setGlobalOptions } from 'firebase-functions/v2';
 
 initializeApp();
 const db = getFirestore();
@@ -83,7 +83,23 @@ export const submitUserProfile = onCall(
         });
 
         // Prepare the data to set
-        const userData = {
+        interface UserData {
+            displayName?: string;
+            email?: string;
+            photoURL?: string;
+            createdAt: Date;
+            weight: number;
+            height: number;
+            sex: string;
+            dateOfBirth: string;
+            fitnessGoals: string[];
+            difficulty: string;
+            onBoardingComplete: boolean;
+            gym: number | null;
+            accountType?: string;
+        }
+
+        const userData: UserData = {
           // Auth data - only include fields that are not null/undefined
           ...(userRecord.displayName && { displayName: userRecord.displayName }),
           ...(userRecord.email && { email: userRecord.email }),
@@ -100,6 +116,13 @@ export const submitUserProfile = onCall(
           onBoardingComplete: true,
           gym: null,
         };
+
+        // Get existing user data to preserve accountType
+        const existingUserDoc = await db.collection('users').doc(uid).get();
+        const existingData = existingUserDoc.data();
+        
+        // Merge with existing accountType or default to 'user'
+        userData.accountType = existingData?.accountType || 'user';
 
         console.log("Attempting to update Firestore document with data:", userData);
         
