@@ -106,6 +106,18 @@ service cloud.firestore {
         request.auth.uid == resource.data.userId; // Users can only delete their own data
     }
 
+    // Gym entries collection
+    match /gymentries/{entryId} {
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only read their own gym entries
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId; // Users can only create entries for themselves
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only update their own entries
+      allow delete: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only delete their own entries
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;

@@ -15,6 +15,8 @@ import { useNavigation } from '@react-navigation/native';
 import { CameraView, BarcodeScanningResult, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { Container } from '@/components/Container';
+import { doc, getDoc, collection, addDoc, query, where, orderBy, limit, getDocs, updateDoc, getFirestore } from '@firebase/firestore';
+import { auth } from '../../firebaseConfig';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 const WINDOW_WIDTH = Dimensions.get('window').width;
@@ -52,31 +54,110 @@ const QR = () => {
         );
     }
 
-    const handleBarCodeScanned = ({ type, data }: BarcodeScanningResult) => {
+    const handleBarCodeScanned = async ({ type, data }: BarcodeScanningResult) => {
         setScanned(true);
+        
         try {
-            // Here you can handle the scanned QR code data
-            // For now, we'll just show an alert
-            Alert.alert(
-                "QR Code Detected",
-                `${data}`,
-                [
-                    {
-                        text: "Cancel",
-                        style: "cancel",
-                        onPress: () => setScanned(false)
-                    },
-                    {
-                        text: "OK",
-                        onPress: () => {
-                            // Handle the QR code data here
-                            setScanned(false);
-                        }
-                    }
-                ]
+            if (!auth.currentUser) {
+                Alert.alert("Error", "You must be logged in to use gym check-in");
+                setScanned(false);
+                return;
+            }
+
+            // Get current user data to check their gym
+            const userDoc = await getDoc(doc(getFirestore(), 'users', auth.currentUser.uid));
+            if (!userDoc.exists()) {
+                Alert.alert("Error", "User data not found");
+                setScanned(false);
+                return;
+            }
+
+            const userData = userDoc.data();
+            const userGym = userData.gym;
+
+            // Parse the QR code data (expecting gym ID)
+            const scannedGymId = parseInt(data);
+            
+            if (isNaN(scannedGymId)) {
+                Alert.alert("Error", "Invalid QR Code - not a valid gym ID");
+                setScanned(false);
+                return;
+            }
+
+            // Check if the scanned gym matches user's gym
+            if (userGym !== scannedGymId) {
+                Alert.alert(
+                    "Access Denied", 
+                    `This QR code is for gym ${scannedGymId}, but you're registered for gym ${userGym || 'none'}`
+                );
+                setScanned(false);
+                return;
+            }
+
+            // Check if user has an active gym session
+            const gymentriesRef = collection(getFirestore(), 'gymentries');
+            const activeSessionQuery = query(
+                gymentriesRef,
+                where('userId', '==', auth.currentUser.uid),
+                where('exitTime', '==', null)
             );
+
+            const activeSessionSnapshot = await getDocs(activeSessionQuery);
+            const hasActiveSession = !activeSessionSnapshot.empty;
+
+            if (hasActiveSession) {
+                // User is checking out
+                const sessionDoc = activeSessionSnapshot.docs[0];
+                const sessionData = sessionDoc.data();
+                const entryTime = sessionData.entryTime.toDate();
+                const exitTime = new Date();
+                const duration = Math.round((exitTime.getTime() - entryTime.getTime()) / (1000 * 60)); // duration in minutes
+
+                // Update the session with exit time
+                await updateDoc(doc(getFirestore(), 'gymentries', sessionDoc.id), {
+                    exitTime: exitTime,
+                    duration: duration
+                });
+
+                Alert.alert(
+                    "Gym Check-Out",
+                    `Thanks for your workout!\n\nSession Duration: ${duration} minutes\nEntry: ${entryTime.toLocaleTimeString()}\nExit: ${exitTime.toLocaleTimeString()}`,
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => setScanned(false)
+                        }
+                    ]
+                );
+            } else {
+                // User is checking in
+                const entryTime = new Date();
+                
+                // Create new gym entry
+                await addDoc(gymentriesRef, {
+                    userId: auth.currentUser.uid,
+                    gymId: scannedGymId,
+                    entryTime: entryTime,
+                    exitTime: null,
+                    duration: null,
+                    createdAt: entryTime
+                });
+
+                Alert.alert(
+                    "Gym Check-In",
+                    `Welcome to the gym!\n\nEntry Time: ${entryTime.toLocaleTimeString()}\nEnjoy your workout!`,
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => setScanned(false)
+                        }
+                    ]
+                );
+            }
+
         } catch (error) {
-            Alert.alert("Error", "Invalid QR Code");
+            console.error('Error handling gym check-in/out:', error);
+            Alert.alert("Error", "Failed to process gym entry. Please try again.");
             setScanned(false);
         }
     };
