@@ -27,13 +27,17 @@ export type RootStackParamList = {
             }[];
         };
     };
+    // Add other screen params here
+};
+
+export type HomeStackParamList = {
+    HomeMain: undefined;
     ExerciseDetail: {
         exerciseId: string;
     };
     AreaExercises: {
         area: string;
     };
-    // Add other screen params here
 };
 
 declare global {

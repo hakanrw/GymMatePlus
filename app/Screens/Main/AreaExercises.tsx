@@ -14,6 +14,8 @@ import { Container } from '@/components/Container';
 import { collection, query, where, getDocs } from '@firebase/firestore';
 import { firestore } from '../../firebaseConfig';
 import { FontAwesome } from '@expo/vector-icons';
+import { HomeStackParamList } from '@/app/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 interface Exercise {
     id: string;
@@ -26,8 +28,10 @@ interface Exercise {
     targetMuscles: string[];
 }
 
+type AreaExercisesNavigationProp = NativeStackNavigationProp<HomeStackParamList, 'AreaExercises'>;
+
 const AreaExercises = () => {
-    const navigation = useNavigation() as any;
+    const navigation = useNavigation<AreaExercisesNavigationProp>();
     const route = useRoute();
     const { area } = route.params as { area: string };
     
@@ -86,6 +90,18 @@ const AreaExercises = () => {
     return (
         <Container>
             <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Back Button Header */}
+                <View style={styles.backHeader}>
+                    <TouchableOpacity 
+                        style={styles.backButton}
+                        onPress={() => navigation.goBack()}
+                        activeOpacity={0.7}
+                    >
+                        <FontAwesome name="chevron-left" size={20} color="#000" />
+                        <Text style={styles.backText}>Back</Text>
+                    </TouchableOpacity>
+                </View>
+
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.areaTitle}>{area} Exercises</Text>
@@ -187,6 +203,21 @@ const styles = StyleSheet.create({
         marginTop: 16,
         fontSize: 16,
         color: '#666',
+    },
+    backHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    backText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#000',
     },
     header: {
         marginBottom: 24,
