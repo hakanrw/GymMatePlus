@@ -1,0 +1,251 @@
+{
+  "level": "advanced",
+  "description": "İleri seviyedeki kullanıcılar için antrenman programı ve yapay zeka özelliklerini içerir",
+  "aiFeatures": {
+    "workoutOptimization": {
+      "pumpThreshold": 3,
+      "fatigueThreshold": 3,
+      "jointPainThreshold": 3,
+      "workoutModifications": {
+        "weightReduction": "Harekette yorgunluk veya eklem ağrısı 3+ yıldız ise ağırlık düşürülmesi önerilir",
+        "exerciseChange": "Bir harekette 3 hafta boyunca yüksek eklem ağrısı (3+ yıldız) veya yorgunluk varsa hareket değişimi önerilir"
+      }
+    },
+    "exerciseData": {
+      "structure": {
+        "targetMuscle": "Tükenişe giden hedef bölge",
+        "assistMuscles": "Hareket izole değilse, diğer çalışan yardımcı bölgeler",
+        "fatigueScore": "5 üzerinden yıldız ile",
+        "compoundStatus": "Bileşik / İzole",
+        "mainExerciseStatus": "Ana hareket / İkincil Aksesuar Hareket / Üçüncül Aksesuar Hareket"
+      }
+    },
+    "progressionLogic": {
+      "jointPain": {
+        "level1": "Hareketin ağırlığı arttırılmaz",
+        "level2": "Ağırlık tekrar alt sınırına düşürülür (sabit tekrarlı hareketler için 2.5 kg düşüş)",
+        "level3": "Hareket tekrar alt sınırına düşürülür ve ağırlık düşürülür (sabit tekrarlı hareketler için 10 kg düşüş)",
+        "level4Plus": "Alternatif hareket önerilir"
+      },
+      "pump": {
+        "regular": {
+          "threshold": 3,
+          "belowThreshold": "Ağırlık arttırılmaz"
+        },
+        "fatLoss": {
+          "threshold": 2,
+          "belowThreshold": "Pump 1 ve altında ise ağırlık arttırılmaz"
+        }
+      },
+      "overloadConditions": "Hareket tamamlandıysa + Eklem ağrısı şartı sağlanıyorsa + Pump şartı sağlanıyorsa"
+    }
+  },
+  "trainingStructure": {
+    "muscleGroups": [
+      "Göğüs (üst göğüs ve tüm göğüs olarak ayrılabilir)",
+      "Sırt (lat, orta sırt, ve bel olarak ayrılabilir)",
+      "Quadriceps",
+      "Hamstring",
+      "Biceps",
+      "Triceps",
+      "Kalça",
+      "Omuz (ön omuz, yan omuz ve arka omuz kaslarının çalışması zorunlu)"
+    ],
+    "mainExercises": [
+      "Bench press",
+      "Overhead press",
+      "Squat",
+      "Deadlift",
+      "Dips",
+      "Barfiks",
+      "Barbell row"
+    ],
+    "secondaryExercises": [
+      "Smith bench press",
+      "Romanian Deadlift",
+      "Smith squat",
+      "Smith deadlift",
+      "Chest press",
+      "Incline dumbell press",
+      "Dumbel press",
+      "Front squat",
+      "Lat pulldown",
+      "Seated row",
+      "Destekli barfiks",
+      "Destekli dips",
+      "Dumbell row",
+      "Leg press",
+      "Hack squat"
+    ],
+    "tertiaryExercises": [
+      "Dumbell curl",
+      "Incline curl",
+      "Barbell curl",
+      "Triceps extantion",
+      "Side raise",
+      "Facepull/rear delt raise",
+      "Leg extantion",
+      "Leg curl",
+      "Chest fly",
+      "Rope pullover"
+    ],
+    "parameters": {
+      "gender": {
+        "male": "Üst gövde öncelikli",
+        "female": "Alt gövde öncelikli"
+      },
+      "experience": "İleri Seviye",
+      "goal": ["Yağ yakımı", "Kas kazanımı"],
+      "priorityArea": ["Göğüs", "Sırt", "Omuz", "Kol", "Bacak"],
+      "trainingStyle": ["Heavy Intense", "Volume Accumulation"],
+      "daysPerWeek": {
+        "4": "upper/lower",
+        "5": "push-pull-legs-upper-lower",
+        "6": "push-pull-legs-push-pull-legs"
+      }
+    },
+    "setRepetitionRanges": {
+      "mainExercises": "Ana hareketler 3-4 set, 6-10 tekrar, RIR 1-2",
+      "secondaryExercises": "8-12 tekrar arası, RIR 1-2",
+      "tertiaryExercises": "10-20 tekrar arası, RIR 0-1"
+    },
+    "weeklyFrequency": {
+      "mainExerciseFrequency": "Haftada yalnızca 1 kere",
+      "muscleGroupsPerWeek": "Her kas grubu haftada en az 2 kere çalıştırılır",
+      "splitStructures": {
+        "4day": "upper/lower",
+        "5day": "push-pull-legs-upper-lower",
+        "6day": "push-pull-legs-push-pull-legs"
+      },
+      "fullBodySplits": "İleri seviyede fullbody bölünme kullanılmaz"
+    },
+    "programRequirements": {
+      "mandatoryExercises": [
+        "Bir leg curl varyasyonu (lying leg curl veya seated leg curl)",
+        "Squat veya front squat'a ek olarak bir leg extension",
+        "Bir yana açış varyasonu (Cable lateral raise, dumbell lateral raise, vb.)",
+        "Bir arka omuz izolasyon varyasyonu (rear delt fly, y raise, facepull)",
+        "Bir biceps izolasyonu (cable curl, dumbell curl, vb.)",
+        "Bir triceps izolasyonu (overhead triceps extension, vb.)"
+      ]
+    },
+    "advancedTechniques": {
+      "preExhaustionMethod": "Bacak antrenmanlarında ana hareket öncesinde ters bacak kas grubuna ait izole egzersiz eklenir",
+      "stableAlternatives": "Barbell row gibi daha az stabil hareketler yerine dumbell row veya machine row gibi daha stabil muadiller tercih edilir",
+      "compoundReduction": "Temel bileşik hareketler yerine daha stabil muadiller tercih edilir, çünkü temel hareketlerde biriktireceği yorgunluk düzeyi fazladır"
+    },
+    "cardio": {
+      "fatLoss": {
+        "startingDuration": "40 dk/hafta",
+        "maxDuration": "120 dk/hafta",
+        "progression": "Haftalık 5 dk artış"
+      }
+    }
+  },
+  "samplePrograms": {
+    "fourDay": {
+      "upperLower": {
+        "upperDay1": [
+          {"exercise": "Bench Press", "sets": 3, "reps": "6-10", "rir": "1-2"},
+          {"exercise": "Chest Fly", "sets": 3, "reps": "10-20", "rir": "1"},
+          {"exercise": "Lat Pulldown", "sets": 3, "reps": "8-12", "rir": "1"},
+          {"exercise": "Seated Row", "sets": 3, "reps": "10-15", "rir": "0"},
+          {"exercise": "Lateral Raise", "sets": 4, "reps": "10-20", "rir": "0"},
+          {"exercise": "Reverse Fly", "sets": 2, "reps": "10-15", "rir": "0"},
+          {"exercise": "Skull Crusher", "sets": 2, "reps": "10-15", "rir": "0"},
+          {"exercise": "Cable Curl", "sets": 2, "reps": "10-15", "rir": "0"}
+        ],
+        "lowerDay1": [
+          {"exercise": "Seated Leg Curl", "sets": 3, "reps": "10-15", "rir": "0-1"},
+          {"exercise": "Squat", "sets": 4, "reps": "6-10", "rir": "2"},
+          {"exercise": "Leg Press", "sets": 3, "reps": "10-15", "rir": "1-2"},
+          {"exercise": "Calf Raise", "sets": 4, "reps": "10-20", "rir": "0"},
+          {"exercise": "AB rollout", "sets": 3, "reps": "6-10", "rir": "2"}
+        ],
+        "upperDay2": [
+          {"exercise": "Incline Dumbell Press", "sets": 4, "reps": "6-10", "rir": "1-2"},
+          {"exercise": "Dumbell Shoulder Press", "sets": 3, "reps": "6-10", "rir": "1-2"},
+          {"exercise": "Lat Pulldown", "sets": 3, "reps": "10-15", "rir": "1-2"},
+          {"exercise": "Dumbell Row", "sets": 3, "reps": "8-12", "rir": "1-2"},
+          {"exercise": "Preacher Curl", "sets": 3, "reps": "10-15", "rir": "0"},
+          {"exercise": "Overhead Cable Extension", "sets": 3, "reps": "10-15", "rir": "0"}
+        ],
+        "lowerDay2": [
+          {"exercise": "Leg Extension", "sets": 5, "reps": "10-15", "rir": "0"},
+          {"exercise": "Romanian Deadlift", "sets": 4, "reps": "6-10", "rir": "2"},
+          {"exercise": "Seated Leg curl", "sets": 2, "reps": "10-15", "rir": "0"},
+          {"exercise": "Walking Lunge", "sets": 2, "reps": "10-15", "rir": "0"},
+          {"exercise": "Calf Raise", "sets": 4, "reps": "10-20", "rir": "0"},
+          {"exercise": "Crunch Machine", "sets": 3, "reps": "10-15", "rir": "0"}
+        ]
+      }
+    },
+    "priorityAreas": {
+      "chestFocused": {
+        "title": "Göğüs Odaklı 5 Günlük Program",
+        "day1": [
+          {"exercise": "Incline Bench Press", "sets": 4, "reps": "6-10", "rir": "1-2"},
+          {"exercise": "Chest Fly", "sets": 3, "reps": "10-20", "rir": "0-1"},
+          {"exercise": "Lat Pulldown", "sets": 3, "reps": "10-15", "rir": "0-1"},
+          {"exercise": "Seated Row", "sets": 3, "reps": "10-15", "rir": "0"},
+          {"exercise": "Lateral Raise", "sets": 3, "reps": "10-20", "rir": "0"},
+          {"exercise": "Skullcrusher", "sets": 3, "reps": "10-20", "rir": "0"},
+          {"exercise": "Cable Curl", "sets": 3, "reps": "10-15", "rir": "0"}
+        ],
+        "day2": [
+          {"exercise": "Seated Leg Curl", "sets": 3, "reps": "10-15", "rir": "0-1"},
+          {"exercise": "Squat", "sets": 4, "reps": "6-10", "rir": "2"},
+          {"exercise": "Leg Press", "sets": 3, "reps": "10-15", "rir": "1-2"},
+          {"exercise": "Calf Raise", "sets": 4, "reps": "10-20", "rir": "0"},
+          {"exercise": "AB rollout", "sets": 3, "reps": "6-10", "rir": "2"}
+        ],
+        "day3": [
+          {"exercise": "Bench Press", "sets": 3, "reps": "6-10", "rir": "1-2"},
+          {"exercise": "Incline Cable Fly", "sets": 2, "reps": "10-20", "rir": "0"},
+          {"exercise": "Lat Pulldown", "sets": 3, "reps": "10-15", "rir": "1-2"},
+          {"exercise": "Dumbell Shoulder Press", "sets": 3, "reps": "6-10", "rir": "1-2"},
+          {"exercise": "Dumbell Row", "sets": 3, "reps": "6-10", "rir": "1-2"},
+          {"exercise": "Facepull", "sets": 3, "reps": "10-15", "rir": "0"},
+          {"exercise": "Incline Curl", "sets": 3, "reps": "10-20", "rir": "0"}
+        ],
+        "day4": [
+          {"exercise": "Incline Smith Machine Bench Press", "sets": 3, "reps": "AMRAP", "rir": "0-1"},
+          {"exercise": "Incline Dumbell Press", "sets": 2, "reps": "10-15", "rir": "0-1"},
+          {"exercise": "Machine Row", "sets": 3, "reps": "10-15", "rir": "0-1"},
+          {"exercise": "Cable Pullover", "sets": 2, "reps": "10-15", "rir": "0"},
+          {"exercise": "Reverse Fly", "sets": 3, "reps": "10-15", "rir": "0"},
+          {"exercise": "Preacher Curl", "sets": 3, "reps": "10-15", "rir": "0"},
+          {"exercise": "Overhead Triceps Extension", "sets": 3, "reps": "10-15", "rir": "0"}
+        ],
+        "day5": [
+          {"exercise": "Leg Extension", "sets": 4, "reps": "10-15", "rir": "0"},
+          {"exercise": "Romanian Deadlift", "sets": 3, "reps": "6-10", "rir": "2"},
+          {"exercise": "Seated Leg curl", "sets": 2, "reps": "10-15", "rir": "0"},
+          {"exercise": "Walking Lunge", "sets": 2, "reps": "10-15", "rir": "0"},
+          {"exercise": "Calf Raise", "sets": 4, "reps": "10-20", "rir": "0"},
+          {"exercise": "Crunch Machine", "sets": 3, "reps": "10-15", "rir": "0"}
+        ]
+      },
+      "backFocused": {
+        "title": "Sırt Odaklı 5 Günlük Program",
+        "description": "Bu program sırt kaslarını öncelikli olarak hedefler",
+        "exercises": "Detaylı egzersiz listesi originalinde mevcut"
+      },
+      "shoulderFocused": {
+        "title": "Omuz Odaklı 5 Günlük Program",
+        "description": "Bu program omuz kaslarını öncelikli olarak hedefler",
+        "exercises": "Detaylı egzersiz listesi originalinde mevcut"
+      },
+      "armFocused": {
+        "title": "Kol Odaklı 5 Günlük Program",
+        "description": "Bu program biceps ve triceps kaslarını öncelikli olarak hedefler",
+        "exercises": "Detaylı egzersiz listesi originalinde mevcut"
+      },
+      "legFocused": {
+        "title": "Bacak Odaklı 5 Günlük Program",
+        "description": "Bu program bacak kaslarını öncelikli olarak hedefler",
+        "exercises": "Detaylı egzersiz listesi originalinde mevcut"
+      }
+    }
+  }
+}

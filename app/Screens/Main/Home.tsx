@@ -34,20 +34,25 @@ const Home = () => {
     const searchContainerRef = useRef<View>(null);
 
     useEffect(() => {
-        const handleClickOutside = (event: any) => {
-            // For web platform
-            if (Platform.OS === 'web') {
+        const handleClickOutside = () => {
+            // For mobile, we'll handle this differently through touch events
+            if (Platform.OS !== 'web') {
+                setShowResults(false);
+            }
+        };
+
+        // Only add document listeners on web platform
+        if (Platform.OS === 'web' && typeof document !== 'undefined') {
+            const handleWebClickOutside = (event: any) => {
                 const target = event.target as HTMLElement;
                 if (searchContainerRef.current && !target.closest('[data-search-container]')) {
                     setShowResults(false);
                 }
-            }
-        };
-
-        if (Platform.OS === 'web') {
-            document.addEventListener('click', handleClickOutside);
+            };
+            
+            document.addEventListener('click', handleWebClickOutside);
             return () => {
-                document.removeEventListener('click', handleClickOutside);
+                document.removeEventListener('click', handleWebClickOutside);
             };
         }
     }, []);
