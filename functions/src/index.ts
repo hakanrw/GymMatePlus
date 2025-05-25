@@ -238,3 +238,105 @@ export const seedExercises = onRequest(
     });
   }
 );
+
+// Default program template
+const defaultProgram = {
+    Monday: [
+        { exercise: 'Squats', sets: '3x8-10', rpe: '7-8' },
+        { exercise: 'Bench Press', sets: '4x6-8', rpe: '7-8' },
+        { exercise: 'Bicep Curls', sets: '3x10-12', rpe: '6-7' },
+    ],
+    Wednesday: [
+        { exercise: 'Squats', sets: '3x5', rpe: '8-9' },
+        { exercise: 'Push-ups', sets: '3x8-12', rpe: '7-8' },
+        { exercise: 'Hammer Curls', sets: '3x10', rpe: '6-7' },
+    ],
+    Friday: [
+        { exercise: 'Bench Press', sets: '3x8', rpe: '7-8' },
+        { exercise: 'Squats', sets: '3x10', rpe: '6-7' },
+        { exercise: 'Treadmill Running', sets: '20 min', rpe: '6-7' },
+    ],
+};
+
+async function assignRandomCoach(userId: string) {
+    try {
+        // Query for all coaches
+        const coachesQuery = await db.collection('users')
+            .where('accountType', '==', 'coach')
+            .get();
+
+        if (coachesQuery.empty) {
+            console.log('No coaches available, skipping coach assignment');
+            return null;
+        }
+
+        // Select a random coach
+        const coaches = coachesQuery.docs;
+        const randomCoach = coaches[Math.floor(Math.random() * coaches.length)];
+        const coachData = randomCoach.data();
+
+        // Update the user's coach field
+        await db.collection('users').doc(userId).update({
+            coach: randomCoach.id
+        });
+
+        // Add the user to the coach's trainees list
+        const currentTrainees = coachData.trainees || [];
+        await db.collection('users').doc(randomCoach.id).update({
+            trainees: [...currentTrainees, userId]
+        });
+
+        console.log(`Assigned coach ${randomCoach.id} to user ${userId}`);
+        return randomCoach.id;
+    } catch (error) {
+        console.error('Error assigning coach:', error);
+        return null;
+    }
+}
+
+export const createUser = onCall(
+  { cors: true },
+  async (request) => {
+    try {
+      const uid = request.auth?.uid;
+      if (!uid) {
+        throw new HttpsError('unauthenticated', 'User must be authenticated.');
+      }
+
+      // Get the user's auth data
+      const userRecord = await getAuth().getUser(uid);
+
+      // Check if user already exists
+      const existingUserDoc = await db.collection('users').doc(uid).get();
+      if (existingUserDoc.exists) {
+        return { success: true, message: 'User already exists' };
+      }
+
+      // Create the user document
+      const userData = {
+        displayName: userRecord.displayName || null,
+        email: userRecord.email || null,
+        photoURL: userRecord.photoURL || null,
+        createdAt: new Date(),
+        onBoardingComplete: false,
+        accountType: 'user',
+        program: defaultProgram,
+        gym: null,
+      };
+
+      await db.collection('users').doc(uid).set(userData);
+
+      // Assign a random coach
+      const coachId = await assignRandomCoach(uid);
+
+      return { 
+        success: true, 
+        message: 'User created successfully',
+        coachAssigned: coachId !== null 
+      };
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      throw new HttpsError('internal', `Error creating user: ${error?.message || 'Unknown error'}`);
+    }
+  }
+);
