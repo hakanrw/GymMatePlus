@@ -93,6 +93,18 @@ service cloud.firestore {
       allow write: if isAdmin(); // Only admin can modify exercises
     }
 
+    // Fitness data collection
+    match /fitnessData/{dataId} {
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only read their own data
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId; // Users can only create data for themselves
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only update their own data
+      allow delete: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only delete their own data
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;

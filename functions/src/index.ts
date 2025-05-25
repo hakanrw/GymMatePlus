@@ -179,3 +179,78 @@ export const selectGymAndPayment = onCall({ cors: true }, async (request) => {
   
     return { success: true };
   });
+
+export const seedFitnessData = onCall(
+  { cors: true },
+  async (request) => {
+    try {
+      const uid = request.auth?.uid;
+      if (!uid) {
+        throw new HttpsError('unauthenticated', 'User must be authenticated.');
+      }
+
+      // Sample fitness data for the last 30 days
+      const sampleData = [];
+      const now = new Date();
+      
+      // Weight data - gradual decrease
+      for (let i = 30; i >= 0; i -= 3) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const weight = 75 - (30 - i) * 0.1; // Gradual weight loss
+        sampleData.push({
+          userId: uid,
+          type: 'weight',
+          value: Math.round(weight * 10) / 10,
+          date: date
+        });
+      }
+      
+      // Workout data - 3-4 workouts per week
+      for (let i = 30; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dayOfWeek = date.getDay();
+        // Add workouts on Monday, Wednesday, Friday, and sometimes Saturday
+        if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5 || (dayOfWeek === 6 && Math.random() > 0.5)) {
+          sampleData.push({
+            userId: uid,
+            type: 'workout',
+            value: 1,
+            date: date
+          });
+        }
+      }
+      
+      // Strength data - bench press progression
+      for (let i = 30; i >= 0; i -= 5) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const weight = 60 + (30 - i) * 0.5; // Progressive overload
+        sampleData.push({
+          userId: uid,
+          type: 'strength',
+          value: Math.round(weight * 10) / 10,
+          date: date,
+          exerciseName: 'Bench Press',
+          sets: 3,
+          reps: 8
+        });
+      }
+
+      // Add all sample data to Firestore
+      const batch = db.batch();
+      sampleData.forEach(data => {
+        const docRef = db.collection('fitnessData').doc();
+        batch.set(docRef, data);
+      });
+      
+      await batch.commit();
+      
+      return { 
+        success: true, 
+        message: `Added ${sampleData.length} sample fitness data entries` 
+      };
+    } catch (error: any) {
+      console.error('Error seeding fitness data:', error);
+      throw new HttpsError('internal', `Error seeding fitness data: ${error?.message || 'Unknown error'}`);
+    }
+  }
+);
