@@ -27,6 +27,9 @@ export type RootStackParamList = {
             }[];
         };
     };
+    EntryHistory: undefined;
+    Settings: undefined;
+    TraineeEntries: undefined;
     // Add other screen params here
 };
 

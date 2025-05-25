@@ -109,7 +109,8 @@ service cloud.firestore {
     // Gym entries collection
     match /gymentries/{entryId} {
       allow read: if isAuthenticated() && 
-        request.auth.uid == resource.data.userId; // Users can only read their own gym entries
+        (request.auth.uid == resource.data.userId || // Users can read their own gym entries
+         isCoach()); // Coaches can read all gym entries (they'll filter client-side)
       allow create: if isAuthenticated() && 
         request.auth.uid == request.resource.data.userId; // Users can only create entries for themselves
       allow update: if isAuthenticated() && 

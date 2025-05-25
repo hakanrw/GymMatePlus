@@ -52,6 +52,8 @@ const Profile = () => {
     const defaultProfilePic = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
     const [profilePicError, setProfilePicError] = useState(false);
     const [photoURL, setPhotoURL] = useState<string | null>(null);
+    const [showDropdownMenu, setShowDropdownMenu] = useState(false);
+    const [isCoach, setIsCoach] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -61,6 +63,14 @@ const Profile = () => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     setUserData(data);
+                    const userRole = data.role;
+                    const accountType = data.accountType;
+                    const coachStatus = userRole === 'coach' || accountType === 'coach';
+                    setIsCoach(coachStatus);
+                    console.log('Full user data:', JSON.stringify(data, null, 2));
+                    console.log('User role field:', userRole, 'Type:', typeof userRole);
+                    console.log('Account type field:', accountType, 'Type:', typeof accountType);
+                    console.log('Is coach:', coachStatus);
                     
                     // Handle Google profile photo URL
                     let photoUrl = data.photoURL || auth.currentUser.photoURL;
@@ -198,6 +208,25 @@ const Profile = () => {
         }
     };
 
+    const handleEntryHistory = () => {
+        setShowDropdownMenu(false);
+        navigation.navigate('EntryHistory');
+    };
+
+    const handleSettings = () => {
+        setShowDropdownMenu(false);
+        navigation.navigate('Settings');
+    };
+
+    const handleTraineeEntries = () => {
+        setShowDropdownMenu(false);
+        navigation.navigate('TraineeEntries');
+    };
+
+    const toggleDropdownMenu = () => {
+        setShowDropdownMenu(!showDropdownMenu);
+    };
+
     const handleBack = () => {
         navigation.goBack();
     };
@@ -312,10 +341,15 @@ const Profile = () => {
     return (
         <Container style={{padding: 0}}>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-                <Text style={styles.title}>BodyTrack™</Text>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="black" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>BodyTrack™</Text>
+                    <TouchableOpacity onPress={toggleDropdownMenu} style={styles.menuButton}>
+                        <Ionicons name="menu" size={24} color="black" />
+                    </TouchableOpacity>
+                </View>
 
                 {/* Profile Picture and User Info */}
                 <View style={styles.profileSection}>
@@ -489,6 +523,53 @@ const Profile = () => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Dropdown Menu Modal */}
+            <Modal
+                visible={showDropdownMenu}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowDropdownMenu(false)}
+            >
+                <TouchableOpacity 
+                    style={styles.dropdownOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowDropdownMenu(false)}
+                >
+                    <View style={styles.dropdownMenu}>
+                        <TouchableOpacity 
+                            style={styles.dropdownItem}
+                            onPress={handleEntryHistory}
+                        >
+                            <Ionicons name="time-outline" size={20} color="#007AFF" />
+                            <Text style={styles.dropdownText}>Entry History</Text>
+                        </TouchableOpacity>
+                        
+                        {isCoach && (
+                            <>
+                                <View style={styles.dropdownDivider} />
+                                <TouchableOpacity 
+                                    style={styles.dropdownItem}
+                                    onPress={handleTraineeEntries}
+                                >
+                                    <Ionicons name="people-outline" size={20} color="#007AFF" />
+                                    <Text style={styles.dropdownText}>Trainee Entries</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                        
+                        <View style={styles.dropdownDivider} />
+                        
+                        <TouchableOpacity 
+                            style={styles.dropdownItem}
+                            onPress={handleSettings}
+                        >
+                            <Ionicons name="settings-outline" size={20} color="#007AFF" />
+                            <Text style={styles.dropdownText}>Settings</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </Container>
     );
 };
@@ -496,17 +577,26 @@ const Profile = () => {
 export default Profile;
 
 const styles = StyleSheet.create({
-    title: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        alignSelf: 'center',
-        marginBottom: 20,
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        position: 'relative',
     },
     backButton: {
         position: 'absolute',
         top: 10,
         left: 20,
         zIndex: 1,
+    },
+    title: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        flex: 1,
+        textAlign: 'center',
+        marginBottom: 0,
     },
     profileSection: {
         flexDirection: 'row',
@@ -740,5 +830,52 @@ const styles = StyleSheet.create({
     modalCancelText: {
         color: '#666',
         fontSize: 16,
+    },
+    menuButton: {
+        position: 'absolute',
+        top: 10,
+        right: 20,
+        zIndex: 1,
+    },
+    dropdownOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    dropdownMenu: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        width: '100%',
+        maxWidth: 320,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        minHeight: 48,
+    },
+    dropdownText: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 8,
+        color: '#000',
+    },
+    dropdownDivider: {
+        height: 1,
+        backgroundColor: '#e0e0e0',
+        marginVertical: 8,
     },
 });

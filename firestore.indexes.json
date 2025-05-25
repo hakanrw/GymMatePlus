@@ -33,6 +33,20 @@
       ]
     },
     {
+      "collectionGroup": "fitnessData",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "gymentries",
       "queryScope": "COLLECTION",
       "fields": [
@@ -43,6 +57,20 @@
         {
           "fieldPath": "exitTime",
           "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "gymentries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "entryTime",
+          "order": "DESCENDING"
         }
       ]
     }
