@@ -1,12 +1,4 @@
-import { applicationDefault, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-
-initializeApp({
-    projectId: 'plus-gymmate', // 👈 required here
-    credential: applicationDefault(), // uses GOOGLE_APPLICATION_CREDENTIALS if set, or emulator in dev
-});
-
-const db = getFirestore();
 
 const gyms = [
   {
@@ -32,7 +24,9 @@ const gyms = [
   },
 ];
 
-async function seed() {
+export async function seedGyms() {
+  const db = getFirestore();
+
   const batch = db.batch();
   gyms.forEach((gym) => {
     const ref = db.collection('gyms').doc(); // or use gym.id as ID
@@ -41,5 +35,3 @@ async function seed() {
   await batch.commit();
   console.log("🏋️ Seeded gyms into Firestore.");
 }
-
-seed();

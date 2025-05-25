@@ -1,7 +1,5 @@
 import { getFirestore } from 'firebase-admin/firestore';
 
-const db = getFirestore();
-
 const exercises = [
   {
     name: "Bench Press",
@@ -102,6 +100,8 @@ const exercises = [
 ];
 
 export async function seedExercises() {
+  const db = getFirestore();
+
   const batch = db.batch();
   
   exercises.forEach((exercise) => {
