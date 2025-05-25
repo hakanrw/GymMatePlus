@@ -1,0 +1,66 @@
+{
+  "egzersiz_genel_bilgisi": {
+    "ana_hareketler": {
+      "description": "Genelde bu hareketler her set için 4-8 tekrar arası uygulanır. RIR 0’ye neredeyse hiç gidilmez. Genelde RIR 2-3 setler beklenir.",
+      "set_tekrar_araligi": "4-8",
+      "rir": {
+        "minimum": 0,
+        "ortalama_aralik": "2-3",
+        "nadiren": 0
+      },
+      "ornek hareketler": [
+        "Bench press",
+        "Overhead press",
+        "Squat",
+        "Deadlift",
+        "Dips",
+        "Barfiks",
+        "Barbell row"
+      ]
+    },
+    "ikincil_aksesuar_hareketler": {
+      "description": "Genelde bu hareketler için set başına 8-12 civarı tekrarlar kullanılır. RIR 0’ya pek gidilmez, son tekrarlar genelde RIR 1-2 setler beklenir.",
+      "set_tekrar_araligi": "8-12",
+      "rir": {
+        "minimum": 0,
+        "ortalama_aralik": "1-2"
+      },
+      "ornek hareketler": [
+        "Smith bench press",
+        "Romanian Deadlift",
+        "Smith squat",
+        "Smith deadlift",
+        "Chest press",
+        "Incline dumbell press",
+        "Dumbell press",
+        "Front squat",
+        "Lat pulldown",
+        "Seated row",
+        "Destekli barfiks",
+        "Destekli dips",
+        "Dumbell row",
+        "Leg press",
+        "Hack squat"
+      ]
+    },
+    "ucuncul_aksesuar_hareketler": {
+      "description": "Genelde bu hareketler için set başına 10-15 tekrar kullanılır. Genelde bu hareketlerde RIR 0’a gidilir.",
+      "set_tekrar_araligi": "10-15",
+      "rir": {
+        "minimum": 0
+      },
+      " ornek hareketler": [
+        "Dumbell curl",
+        "Incline curl",
+        "Barbell curl",
+        "Triceps extanton",
+        "Side raise",
+        "Facepull/rear delt raise",
+        "Leg extantion",
+        "Leg curl",
+        "Chest fly",
+        "Rope pullover"
+      ]
+    }
+  }
+}

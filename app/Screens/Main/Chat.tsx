@@ -293,6 +293,10 @@ const Chat = () => {
         });
     };
 
+    const handleAIChat = () => {
+        navigation.navigate('AIChat');
+    };
+
     const handleNewChat = () => {
         setShowMenu(false); // Close menu if open
         navigation.navigate('UserSelection');
@@ -374,7 +378,7 @@ const Chat = () => {
                 }
             />
 
-            <TouchableOpacity style={styles.fab} onPress={handleNewChat}>
+            <TouchableOpacity style={styles.fab} onPress={handleAIChat}>
                 <Ionicons name="cube-outline" size={24} color="#fff" />
             </TouchableOpacity>
         </Container>

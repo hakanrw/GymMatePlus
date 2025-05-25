@@ -36,6 +36,7 @@ import PaymentSuccess from './Screens/GymSelection/PaymentSuccess';
 import UserSelection from './Screens/Main/UserSelection';
 import CoachCalendar from './Screens/Main/CoachCalendar';
 import ProgramEditor from './Screens/Main/ProgramEditor';
+import AIChat from './Screens/Main/AIChat';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -103,6 +104,14 @@ function AppStack() {
             <Stack.Screen
                 name="ProgramEditor"
                 component={ProgramEditor}
+                options={{ 
+                    headerShown: false,
+                    presentation: 'modal'
+                }}
+            />
+            <Stack.Screen
+                name="AIChat"
+                component={AIChat}
                 options={{ 
                     headerShown: false,
                     presentation: 'modal'

@@ -27,6 +27,7 @@ export type RootStackParamList = {
             }[];
         };
     };
+    AIChat: undefined;
     // Add other screen params here
 };
 

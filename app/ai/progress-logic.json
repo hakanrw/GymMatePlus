@@ -1,0 +1,62 @@
+{
+  "program_ilerletme_mantigi": {
+    "survey": {
+      "description": "Her antrenman sonrası her hareket için bir anket ortaya çıkar.",
+      "metrics": {
+        "pump": "kas emojisi",
+        "joint_pain": "ünlem"
+      },
+      "goal_question": "Rep/Weight goal achieved for movement?"
+    },
+    "decision_flow": "Eğer kullanıcı 'ulaşıldı' seçeneğini işaretlerse progressive overload'ın devam etmesi için eklem ağrısına bakılır; eğer onaylamazsa ağırlık artırılmaz, yani progressive overload olmaz.",
+    "range_adjustment": {
+      "description": "AI tekrar aralığına sahip hareketleri, eğer hareket arttırılmaya uygunsa, üst tekrar aralığına yaklaştırır.",
+      "example": "Lateral Raise, 10 kg ile 8 tekrar yapıldı; hareketin mantık aralığı 15’e kadar gidiyor. AI bunu 10 tekrara çıkarır, her set 15 tekrar yapılmadığı sürece en küçük ağırlık artırma birimi (2.5 kg) kadar artırılmaz."
+    },
+    "note": "Bu mekanizmanın çalışabilmesi için kullanıcı ilk olarak ağırlıklarını girmeli; sonrasında AI tarafından otomatikleştirilir ve koç müdahil olabilir.",
+    "pain_rules": {
+      "1": "Hareketin ağırlığı artırılmaz.",
+      "2": "Ağırlık tekrar alt sınırına düşürülür (sabit tekrarlı hareketler için bir kademe ağırlık düşüşü: 2.5 kg).",
+      "3": "Hareket hem tekrar alt sınırına düşürülür, hem ağırlık düşürülür (sabit tekrarlı hareketler için 4 kademe düşüş: 10 kg).",
+      "4_ve_üzeri": "Alternatif hareket önerilir (örnek: Bench Press yerine Dumbell Press)."
+    },
+    "pump_rules": {
+      ">=3": "Overload sağlanır.",
+      "<=2": "Achieved flag’i positive olsa bile ağırlık artırılmaz.",
+      "special_fat_loss": {
+        "<=1": "Achieved flag’i positive olsa bile ağırlık artırılmaz.",
+        ">=2": "Overload sağlanır."
+      }
+    },
+    "overload_logic": [
+      "HAREKET TAMAMLANDIYSA",
+      "EKLEM AĞRISI ŞARTI SAĞLAMIŞSA",
+      "PUMP ŞARTI SAĞLANMIŞSA",
+      "HAREKET EN KÜÇÜK BİRİM KADAR İLERLETİLİR"
+    ],
+    "overload_increment": {
+      "fixed_reps_movements": {
+        "range": "3-5x5 set ve tekrar sayılı veya 3-4x6 sabit tekrarlı hareketler",
+        "increment": "2.5 kg artış sağlanır"
+      },
+      "variable_reps_movements": {
+        "description": "Tekrar aralığı sabit olmayan her hareket için 2 tekrar artırma hedefi konur."
+      }
+    },
+    "examples": [
+      {
+        "scenario": "Incline Curl, 3x10 tamamlandı, eklem ağrısı: 0, pump: 3",
+        "update": "AI hareketi haftaya aynı kg için 3x12 olacak şekilde günceller."
+      },
+      {
+        "scenario": "Sonraki hafta kişi 3x12 olarak tamamlayamadı; tamamlanamadı flag’i işaretlendi, eklem ağrısı: 0",
+        "update": "Ağırlık haftaya da 3x12 olur.",
+        "note": "Bir hareket tamamlanmasa dahi eklem ağrısına bakılır çünkü eklem ağrısı deload (kg, tekrar düşürme) gerektirebilir."
+      },
+      {
+        "scenario": "Incline Curl 3x12 tamamlanamadı, eklem ağrısı: 2",
+        "update": "Haftaya 3x8 (alt sınıra düşürüldü)."
+      }
+    ]
+  }
+}
