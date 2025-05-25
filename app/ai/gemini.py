@@ -72,6 +72,22 @@ def generate_workout_program(user_info):
         prompt_text = f"""
 Sen GymMate+ uygulamasının AI antrenörüsün. Görevin, kullanıcının bilgilerine göre GymMate+ AI mantığına uygun bir antrenman programı oluşturmak.
 
+!!!!! ÇOK ÖNEMLİ: KULLANICI {user_info['workout_days']} GÜNLÜK PROGRAM İSTEDİ. KESINLIKLE TAM OLARAK {user_info['workout_days']} GÜN OLUŞTUR. 3 GÜN DEĞİL, {user_info['workout_days']} GÜN! !!!!!
+
+EĞER {user_info['workout_days']} GÜN OLUŞTURMAZSAN YANLIŞ YAPMIŞ OLURSUN!
+
+Kullanıcı Profili:
+- Cinsiyet: {user_info['gender']} (kadınlar için daha fazla alt vücut, erkekler için üst vücut ağırlıklı)
+- Deneyim: {user_info['experience']} (başlangıç: basit hareketler, orta/ileri: kompleks hareketler)
+- Hedef: {user_info['goal']} (kas kazanımı: ağır ağırlık/az tekrar, yağ yakımı: orta ağırlık/çok tekrar)
+- ANTRENMAN GÜN SAYISI: {user_info['workout_days']} GÜN (KESINLIKLE BU KADAR GÜN OLUŞTUR!)
+
+Program yapısı {user_info['workout_days']} gün için:
+- 3 gün: Full body her gün
+- 4 gün: Upper/Lower split
+- 5 gün: Push/Pull/Legs + Upper/Lower
+- 6 gün: Push/Pull/Legs/Push/Pull/Legs
+
 Yalnızca aşağıdaki JSON formatına sadık kalarak çıktı üret:
 
 {{
@@ -81,21 +97,27 @@ Yalnızca aşağıdaki JSON formatına sadık kalarak çıktı üret:
       "exercises": [
         {{ "name": "Egzersiz Adı", "sets": 3, "reps": "8-12", "rir": "1-2" }}
       ]
+    }},
+    {{
+      "day": "Gün 2", 
+      "exercises": [
+        {{ "name": "Başka Egzersiz", "sets": 4, "reps": "6-10", "rir": "2-3" }}
+      ]
     }}
+    // {user_info['workout_days']} güne kadar devam et
   ]
 }}
 
-Kesinlikle sadece bu yapıya uygun JSON verisi döndür. Açıklama, yorum, açıklayıcı metin, selamlama veya başka herhangi bir doğal dil cümlesi ekleme.
+KURALLAR:
+1. KESINLIKLE TAM OLARAK {user_info['workout_days']} GÜN OLUŞTUR - DAHA AZ VEYA FAZLA DEĞİL!
+2. {user_info['goal']} hedefine uygun egzersizler seç
+3. {user_info['experience']} seviyesine uygun zorluk
+4. {user_info['gender']} cinsiyetine uygun program yapısı
+5. Kesinlikle sadece JSON döndür, açıklama ekleme
+6. Program array'inde {user_info['workout_days']} adet gün objesi olmalı
 
 İşte seviye bazlı JSON verisi:
 {level_specific_json}
-
-Kullanıcı Bilgileri:
-- Cinsiyet: {user_info['gender']}
-- Deneyim: {user_info['experience']}
-- Hedef: {user_info['goal']}
-- Antrenman Günü Sayısı: {user_info['workout_days']}
-- Odak Bölge: {user_info.get('focus_area', "Belirtilmemiş")}
         """
 
         print(f"[DEBUG] Prompt hazırlandı, LLM'e gönderiliyor...")

@@ -31,8 +31,12 @@ class ProgramService {
 
     async saveWorkoutProgram(userInfo: any, program: WorkoutDay[]): Promise<string> {
         try {
+            console.log('[DEBUG] saveWorkoutProgram başladı');
+            console.log('[DEBUG] Gelen program gün sayısı:', program.length);
+            
             // Deneyim seviyesini normalize et
             userInfo.experience = this.normalizeExperience(userInfo.experience || '');
+            console.log('[DEBUG] UserInfo normalize edildi:', userInfo);
 
             // Programı kaydetmeden önce undefined alanları temizle ve validate et
             const cleanedProgram = program
@@ -50,6 +54,8 @@ class ProgramService {
                 }))
                 .filter(day => day.exercises.length > 0); // Sadece egzersizi olan günleri al
 
+            console.log('[DEBUG] Program temizlendi, temiz gün sayısı:', cleanedProgram.length);
+
             // Eğer temizleme sonrası program boşsa hata ver
             if (cleanedProgram.length === 0) {
                 throw new Error('Program oluşturulamadı - geçerli egzersiz bulunamadı');
@@ -63,6 +69,8 @@ class ProgramService {
                 workout_days: userInfo.workout_days || '3'
             };
 
+            console.log('[DEBUG] UserInfo temizlendi:', cleanedUserInfo);
+
             const programData: Omit<WorkoutProgram, 'id'> = {
                 userId: auth.currentUser?.uid || 'anonymous',
                 name: `${cleanedUserInfo.goal} Programı`,
@@ -71,12 +79,19 @@ class ProgramService {
                 userInfo: cleanedUserInfo
             };
 
+            console.log('[DEBUG] Firebase\'e kaydedilecek data hazırlandı');
+            console.log('[DEBUG] User ID:', programData.userId);
+            console.log('[DEBUG] Program adı:', programData.name);
+
             // Firebase'e kaydet
             const docRef = await addDoc(collection(this.db, 'users', programData.userId, 'programs'), programData);
-            console.log('Program başarıyla kaydedildi:', docRef.id);
+            console.log('[DEBUG] ✅ Firebase\'e başarıyla kaydedildi!');
+            console.log('[DEBUG] Document ID:', docRef.id);
+            console.log('[DEBUG] Firebase path: users/' + programData.userId + '/programs/' + docRef.id);
+            
             return docRef.id;
         } catch (error) {
-            console.error('Error saving workout program:', error);
+            console.error('[DEBUG] ❌ Firebase kaydetme hatası:', error);
             throw error;
         }
     }

@@ -16,37 +16,50 @@ import type { RootStackParamList } from '@/app/types/navigation';
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
 import { Dumbell } from '@/components/Dumbell';
-import { doc, getDoc } from '@firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, limit, getDocs } from '@firebase/firestore';
 import { firestore, auth } from '../../firebaseConfig';
 import CoachCalendar from './CoachCalendar';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Exercise {
-    exercise: string;
-    sets: string;
-    rpe: string;
+    name: string;
+    sets: number;
+    reps: string;
+    rir: string;
 }
 
-type WorkoutProgram = {
-    [key: string]: Exercise[];
-};
+interface WorkoutDay {
+    day: string;
+    exercises: Exercise[];
+}
+
+type WorkoutProgram = WorkoutDay[];
 
 // Default program template
-const defaultProgram: WorkoutProgram = {
-    Monday: [
-        { exercise: 'BB Back Squat', sets: '3x3-5', rpe: '7-8' },
-        { exercise: 'Bench Press', sets: '4x4-6', rpe: '7-8' },
-    ],
-    Wednesday: [
-        { exercise: 'Deadlift', sets: '3x5', rpe: '7-8' },
-        { exercise: 'OHP', sets: '3x8', rpe: '7-8' },
-    ],
-    Friday: [
-        { exercise: 'Front Squat', sets: '3x8', rpe: '7-8' },
-        { exercise: 'Row', sets: '3x10', rpe: '7-8' },
-    ],
-};
+const defaultProgram: WorkoutProgram = [
+    {
+        day: 'Monday',
+        exercises: [
+            { name: 'BB Back Squat', sets: 3, reps: '3-5', rir: '7-8' },
+            { name: 'Bench Press', sets: 4, reps: '4-6', rir: '7-8' },
+        ]
+    },
+    {
+        day: 'Wednesday', 
+        exercises: [
+            { name: 'Deadlift', sets: 3, reps: '5', rir: '7-8' },
+            { name: 'OHP', sets: 3, reps: '8', rir: '7-8' },
+        ]
+    },
+    {
+        day: 'Friday',
+        exercises: [
+            { name: 'Front Squat', sets: 3, reps: '8', rir: '7-8' },
+            { name: 'Row', sets: 3, reps: '10', rir: '7-8' },
+        ]
+    }
+];
 
 interface DayCardProps {
     day: string;
@@ -58,10 +71,10 @@ const DayCard: React.FC<DayCardProps> = ({ day, exercises }) => (
         <Text style={styles.dayTitle}>{day}</Text>
         {exercises.map((exercise, index) => (
             <View key={index} style={styles.exerciseRow}>
-                <Text style={styles.exerciseName}>{exercise.exercise}</Text>
+                <Text style={styles.exerciseName}>{exercise.name}</Text>
                 <View style={styles.exerciseDetails}>
-                    <Text style={styles.exerciseText}>{exercise.sets}</Text>
-                    <Text style={styles.exerciseText}>RPE {exercise.rpe}</Text>
+                    <Text style={styles.exerciseText}>{exercise.sets} set x {exercise.reps}</Text>
+                    <Text style={styles.exerciseText}>RIR {exercise.rir}</Text>
                 </View>
             </View>
         ))}
@@ -91,11 +104,44 @@ const Calendar = () => {
                 return;
             }
 
-            setProgram(userData?.program || defaultProgram);
+            // En son kaydedilen programı çek
+            await loadLatestProgram();
         } catch (error) {
             console.error('Error loading program:', error);
+            setProgram(defaultProgram);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadLatestProgram = async () => {
+        try {
+            if (!auth.currentUser) return;
+
+            console.log('[DEBUG] En son programı yükleniyor...');
+            console.log('[DEBUG] User ID:', auth.currentUser.uid);
+            
+            // Programs koleksiyonundan en son programı çek
+            const programsRef = collection(firestore, 'users', auth.currentUser.uid, 'programs');
+            const q = query(programsRef, orderBy('createdDate', 'desc'), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            console.log('[DEBUG] Query sonucu:', querySnapshot.size, 'program bulundu');
+
+            if (!querySnapshot.empty) {
+                const latestProgram = querySnapshot.docs[0].data();
+                console.log('[DEBUG] Program bulundu:', latestProgram);
+                console.log('[DEBUG] Program ID:', querySnapshot.docs[0].id);
+                console.log('[DEBUG] Program içeriği:', latestProgram.program);
+                console.log('[DEBUG] Program gün sayısı:', latestProgram.program?.length);
+                setProgram(latestProgram.program || defaultProgram);
+            } else {
+                console.log('[DEBUG] Program bulunamadı, default program kullanılıyor');
+                setProgram(defaultProgram);
+            }
+        } catch (error) {
+            console.error('[DEBUG] Program yükleme hatası:', error);
+            setProgram(defaultProgram);
         }
     };
 
@@ -123,7 +169,7 @@ const Calendar = () => {
         <Container style={styles.container}>
             <Text style={styles.title}>Weekly Program</Text>
             <ScrollView style={styles.scrollView}>
-                {Object.entries(program).map(([day, exercises]) => (
+                {program.map(({ day, exercises }) => (
                     <DayCard key={day} day={day} exercises={exercises} />
                 ))}
             </ScrollView>

@@ -36,6 +36,12 @@ service cloud.firestore {
                     isAdmin() || // Admins can update any user
                     (isTraineeOfCoach(userId) && isOnlyUpdatingProgram()); // Coaches can update their trainees' programs
 
+      // Programs subcollection - users can manage their own programs
+      match /programs/{programId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isAuthenticated() && request.auth.uid == userId;
+      }
+
       function isOnlyUpdatingProgram() {
         let newData = request.resource.data;
         let oldData = resource.data;

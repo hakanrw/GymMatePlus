@@ -17,12 +17,12 @@ class AIService {
         // Check for new program request - reset user info
         if (message.includes('yeni') && (message.includes('program') || message.includes('antrenman'))) {
             this.userInfo = {}; // Reset user information
-            return this.handleProgramRequest(userMessage);
+            return await this.handleProgramRequest(userMessage);
         }
         
         // Program creation flow
         if (message.includes('program') || message.includes('antrenman')) {
-            return this.handleProgramRequest(userMessage);
+            return await this.handleProgramRequest(userMessage);
         }
         
         // Exercise technique questions
@@ -59,27 +59,21 @@ class AIService {
         
         // User info collection
         if (this.isUserInfoResponse(userMessage)) {
-            return this.collectUserInfo(userMessage);
+            return await this.collectUserInfo(userMessage);
         }
         
         return this.getDefaultResponse();
     }
     
-    private handleProgramRequest(message: string): string {
+    private async handleProgramRequest(message: string): Promise<string> {
         // Önce mesajdan bilgileri çek
-        this.collectUserInfo(message);
+        const result = await this.collectUserInfo(message);
 
         if (!this.userInfo.gender || !this.userInfo.experience || !this.userInfo.goal || !this.userInfo.workout_days) {
-            // Eksik bilgi varsa tekrar bilgi iste
-            const missing = [];
-            if (!this.userInfo.gender) missing.push('Cinsiyet (Erkek/Kadın)');
-            if (!this.userInfo.experience) missing.push('Deneyim seviyesi (Başlangıç/Orta/İleri)');
-            if (!this.userInfo.goal) missing.push('Hedef (Kas kazanımı/Yağ yakımı)');
-            if (!this.userInfo.workout_days) missing.push('Haftalık antrenman günü (örn: 3 gün)');
-            return `📝 **Teşekkürler! Şu bilgiler de gerekli:**\n\n${missing.map(item => `• ${item}`).join('\n')}\n\nÖrnek: \"Erkek, başlangıç seviyesi, kas kazanımı hedefi, haftada 3 gün\"`;
+            return result;
         }
 
-        return this.generateWorkoutProgram();
+        return result;
     }
     
     private handleExerciseQuestion(exercise: string): string {
@@ -259,7 +253,7 @@ class AIService {
                /\d+\s*(gün|gun)/.test(message_lower);
     }
     
-    private collectUserInfo(message: string): string {
+    private async collectUserInfo(message: string): Promise<string> {
         const message_lower = message.toLowerCase();
         // Gelişmiş regex ve anahtar kelime eşleştirme ile bilgileri çek
         // Cinsiyet
@@ -285,8 +279,8 @@ class AIService {
         }
         // Tüm bilgiler tamam mı?
         if (this.userInfo.gender && this.userInfo.experience && this.userInfo.goal && this.userInfo.workout_days) {
-            this.generateAndSaveWorkoutProgram();
-            return `✅ **Bilgiler alındı! AI programınızı oluşturuyor...**\n\n**Toplanan Bilgiler:**\n• Cinsiyet: ${this.userInfo.gender}\n• Deneyim: ${this.userInfo.experience}\n• Hedef: ${this.userInfo.goal}\n• Haftalık: ${this.userInfo.workout_days} gün\n\n🤖 **Gemini AI sistemi devreye giriyor...**\nProgramınız birkaç saniye içinde hazır olacak!`;
+            const result = await this.generateAndSaveWorkoutProgram();
+            return result;
         }
         // Eksik bilgi varsa
         const missing = [];
@@ -315,56 +309,48 @@ Bu bir saniye sürecek!`;
     
     async generateAndSaveWorkoutProgram(): Promise<string> {
         try {
+            console.log('[DEBUG] Program oluşturma başladı...');
+            console.log('[DEBUG] Kullanıcı bilgileri:', this.userInfo);
+            
             // Deneyim seviyesini normalize et
             this.userInfo.experience = this.normalizeExperience(this.userInfo.experience || '');
-            const { gender, experience, goal, workout_days } = this.userInfo;
+            console.log('[DEBUG] Normalize edilmiş deneyim:', this.userInfo.experience);
             
-            // Generate program using our program service
             const program = await programService.generateProgramWithGemini(this.userInfo);
+            console.log('[DEBUG] Gemini\'den program alındı, gün sayısı:', program.length);
             
-            // Save program to Firebase
+            if (program.length === 0) {
+                throw new Error('Program oluşturulamadı');
+            }
+            
+            console.log('[DEBUG] Firebase\'e kaydetme başlıyor...');
             const programId = await programService.saveWorkoutProgram(this.userInfo, program);
+            console.log('[DEBUG] ✅ Program başarıyla kaydedildi! ID:', programId);
             
-            // Format response with program details
-            let response = `✅ **Antrenman Programınız Hazır ve Kaydedildi!**
-
-**Profil Özeti:**
-• Cinsiyet: ${gender}
-• Seviye: ${experience}
-• Hedef: ${goal}
-• Haftalık: ${workout_days} gün
-
-**📋 Program Detayları:**\n\n`;
-
-            program.forEach((day, index) => {
-                response += `**${day.day}:**\n`;
-                day.exercises.forEach(exercise => {
-                    response += `• ${exercise.name}: ${exercise.sets} set x ${exercise.reps} (RIR ${exercise.rir})\n`;
-                });
-                response += '\n';
-            });
-
-            response += `🎯 **Program Aktif Hale Getirildi!**
-• Programınız profilinize kaydedildi
-• Ana sayfada günlük antrenmanlarınızı görebilirsiniz
-• Her antrenman sonrası ilerlemelerinizi takip edebilirsiniz
-
-💪 **İpuçları:**
-• RIR = Reps in Reserve (rezervde kalan tekrar sayısı)
-• Progressive overload uygulayarak ağırlıkları artırın
-• Her 4-6 haftada programı güncellemeyi düşünün
-
-Antrenmanlarınızda başarılar! Herhangi bir egzersiz tekniği hakkında soru sormaktan çekinmeyin. 🏋️‍♀️`;
-
-            return response;
+            // Deneyim seviyesini sakla (resetUserInfo çağrısından önce)
+            const experienceLevel = this.userInfo.experience;
             
+            // Reset user info after successful program generation
+            this.resetUserInfo();
+            
+            return `🎉 **Harika! Kişisel antrenman programınız hazır!**
+
+📋 **Program Detayları:**
+• ${program.length} günlük antrenman programı
+• Toplam ${program.reduce((total, day) => total + day.exercises.length, 0)} egzersiz
+• Deneyim seviyeniz: ${experienceLevel}
+
+✅ **Program Firebase'e kaydedildi!**
+📅 **Calendar ekranından programınızı görüntüleyebilirsiniz.**
+
+💪 Başarılar dilerim!`;
         } catch (error) {
-            console.error('Error generating and saving program:', error);
-            return `❌ **Program oluşturulurken bir hata oluştu.**
+            console.error('[DEBUG] ❌ Program oluşturma hatası:', error);
+            return `❌ **Program oluşturulurken bir hata oluştu:**
 
-Teknik bir sorun yaşandı. Lütfen daha sonra tekrar deneyin veya uygulama içindeki manuel program oluşturucu özelliğini kullanın.
+${error instanceof Error ? error.message : 'Bilinmeyen hata'}
 
-Bu arada size egzersiz tekniği, beslenme veya genel fitness konularında yardımcı olabilirim! 💪`;
+🔄 **Lütfen tekrar deneyin veya farklı bilgiler verin.**`;
         }
     }
     
@@ -386,6 +372,10 @@ Bu arada size egzersiz tekniği, beslenme veya genel fitness konularında yardı
         if (e.includes('intermediate') || e.includes('orta')) return 'orta seviye';
         if (e.includes('beginner') || e.includes('başlangıç')) return 'başlangıç';
         return 'başlangıç';
+    }
+
+    private resetUserInfo() {
+        this.userInfo = {};
     }
 }
 

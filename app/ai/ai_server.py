@@ -121,46 +121,61 @@ def create_workout_program():
 def format_program_for_app(program_result, workout_days):
     """Format the Gemini AI result for the mobile app"""
     try:
-        if isinstance(program_result, dict) and 'workout_program' in program_result:
-            program = program_result['workout_program']
-        elif isinstance(program_result, dict):
-            program = program_result
-        else:
-            return create_fallback_program('beginner', 'muscle_gain', workout_days)
+        print(f"[DEBUG] format_program_for_app başladı")
+        print(f"[DEBUG] program_result tipi: {type(program_result)}")
+        print(f"[DEBUG] workout_days: {workout_days}")
         
-        formatted_days = []
-        
-        # Handle different possible formats
-        for day_key, exercises in program.items():
-            if isinstance(exercises, list):
-                formatted_exercises = []
-                for exercise in exercises:
-                    if isinstance(exercise, dict):
-                        formatted_exercises.append({
-                            'name': exercise.get('exercise', exercise.get('name', 'Unknown Exercise')),
-                            'sets': exercise.get('sets', 3),
-                            'reps': exercise.get('reps', exercise.get('rep_range', '8-12')),
-                            'rir': exercise.get('rir', exercise.get('rpe', '2-3')),
-                            'weight': exercise.get('weight')
-                        })
-                    else:
-                        # If exercise is just a string
-                        formatted_exercises.append({
-                            'name': str(exercise),
-                            'sets': 3,
-                            'reps': '8-12',
-                            'rir': '2-3'
-                        })
+        # Gemini'den gelen string'i JSON'a çevir
+        if isinstance(program_result, str):
+            # JSON string'ini parse et
+            try:
+                # Gemini bazen ```json ile başlayıp ``` ile bitirebilir
+                cleaned_result = program_result.strip()
+                if cleaned_result.startswith('```json'):
+                    cleaned_result = cleaned_result[7:]  # ```json kısmını kaldır
+                if cleaned_result.endswith('```'):
+                    cleaned_result = cleaned_result[:-3]  # ``` kısmını kaldır
                 
-                formatted_days.append({
-                    'day': f"Gün {len(formatted_days) + 1} - {day_key}",
-                    'exercises': formatted_exercises
-                })
+                program_data = json.loads(cleaned_result)
+                print(f"[DEBUG] JSON parse edildi: {program_data}")
+            except json.JSONDecodeError as e:
+                print(f"[DEBUG] JSON parse hatası: {e}")
+                return create_fallback_program('beginner', 'muscle_gain', workout_days)
+        else:
+            program_data = program_result
         
-        return formatted_days[:workout_days]
+        # Gemini'nin formatı: {"program": [{"day": "Gün 1", "exercises": [...]}]}
+        if isinstance(program_data, dict) and 'program' in program_data:
+            program_array = program_data['program']
+            print(f"[DEBUG] Program array bulundu, gün sayısı: {len(program_array)}")
+            
+            formatted_days = []
+            for day_data in program_array:
+                if isinstance(day_data, dict) and 'day' in day_data and 'exercises' in day_data:
+                    formatted_exercises = []
+                    for exercise in day_data['exercises']:
+                        if isinstance(exercise, dict):
+                            formatted_exercises.append({
+                                'name': exercise.get('name', 'Unknown Exercise'),
+                                'sets': exercise.get('sets', 3),
+                                'reps': exercise.get('reps', '8-12'),
+                                'rir': exercise.get('rir', '2-3'),
+                                'weight': exercise.get('weight')
+                            })
+                    
+                    formatted_days.append({
+                        'day': day_data['day'],
+                        'exercises': formatted_exercises
+                    })
+            
+            print(f"[DEBUG] Formatlanmış gün sayısı: {len(formatted_days)}")
+            return formatted_days
+        
+        print(f"[DEBUG] Beklenmeyen format, fallback kullanılıyor")
+        return create_fallback_program('beginner', 'muscle_gain', workout_days)
         
     except Exception as e:
-        print(f"Error formatting program: {e}")
+        print(f"[DEBUG] format_program_for_app hatası: {e}")
         return create_fallback_program('beginner', 'muscle_gain', workout_days)
 
 def create_fallback_program(experience, goal, workout_days):
