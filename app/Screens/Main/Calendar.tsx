@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList, HomeStackParamList } from '@/app/types/navigation';
+import type { RootStackParamList, CalendarStackParamList } from '@/app/types/navigation';
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
 import { Dumbell } from '@/components/Dumbell';
@@ -23,7 +23,7 @@ import { firestore, auth } from '../../firebaseConfig';
 import CoachCalendar from './CoachCalendar';
 import { FontAwesome } from '@expo/vector-icons';
 
-type NavigationProp = NativeStackNavigationProp<HomeStackParamList>;
+type NavigationProp = NativeStackNavigationProp<CalendarStackParamList>;
 
 interface Exercise {
     exercise: string;
@@ -47,16 +47,19 @@ type WorkoutProgram = {
 // Default program template
 const defaultProgram: WorkoutProgram = {
     Monday: [
-        { exercise: 'BB Back Squat', sets: '3x3-5', rpe: '7-8' },
-        { exercise: 'Bench Press', sets: '4x4-6', rpe: '7-8' },
+        { exercise: 'Squats', sets: '3x8-10', rpe: '7-8' },
+        { exercise: 'Bench Press', sets: '4x6-8', rpe: '7-8' },
+        { exercise: 'Bicep Curls', sets: '3x10-12', rpe: '6-7' },
     ],
     Wednesday: [
-        { exercise: 'Deadlift', sets: '3x5', rpe: '7-8' },
-        { exercise: 'OHP', sets: '3x8', rpe: '7-8' },
+        { exercise: 'Squats', sets: '3x5', rpe: '8-9' },
+        { exercise: 'Push-ups', sets: '3x8-12', rpe: '7-8' },
+        { exercise: 'Hammer Curls', sets: '3x10', rpe: '6-7' },
     ],
     Friday: [
-        { exercise: 'Front Squat', sets: '3x8', rpe: '7-8' },
-        { exercise: 'Row', sets: '3x10', rpe: '7-8' },
+        { exercise: 'Bench Press', sets: '3x8', rpe: '7-8' },
+        { exercise: 'Squats', sets: '3x10', rpe: '6-7' },
+        { exercise: 'Treadmill Running', sets: '20 min', rpe: '6-7' },
     ],
 };
 

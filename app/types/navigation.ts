@@ -40,6 +40,16 @@ export type HomeStackParamList = {
     };
 };
 
+export type CalendarStackParamList = {
+    CalendarMain: undefined;
+    ExerciseDetail: {
+        exerciseId: string;
+    };
+    AreaExercises: {
+        area: string;
+    };
+};
+
 declare global {
     namespace ReactNavigation {
         interface RootParamList extends RootStackParamList {}

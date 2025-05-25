@@ -69,6 +69,24 @@ function GymSelectionStack() {
     );
 }
 
+function CalendarStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="CalendarMain" component={Calendar} options={{ headerShown: false }} />
+            <Stack.Screen
+                name="ExerciseDetail"
+                component={ExerciseDetail}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AreaExercises"
+                component={AreaExercises}
+                options={{ headerShown: false }}
+            />
+        </Stack.Navigator>
+    );
+}
+
 function HomeStack() {
     return (
         <Stack.Navigator>
@@ -209,7 +227,7 @@ function MainTabs() {
           tabBarShowLabel: false
     }}>
       <Tab.Screen name="Home" component={HomeStack} options={{tabBarIcon: ({color,size}) => <FontAwesome name="home" size={size} color={color}/>}}/>
-      <Tab.Screen name="Calendar" component={Calendar} options={{tabBarIcon: ({color,size}) => <FontAwesome name="calendar" size={size} color={color}/>}}/>
+      <Tab.Screen name="Calendar" component={CalendarStack} options={{tabBarIcon: ({color,size}) => <FontAwesome name="calendar" size={size} color={color}/>}}/>
       <Tab.Screen
         name="QR"
         component={QR}
