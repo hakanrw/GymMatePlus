@@ -1,10 +1,11 @@
 // functions/src/index.ts
-import { HttpsError } from 'firebase-functions/v2/https';
+import { HttpsError, onRequest } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { onCall } from 'firebase-functions/v2/https';
+import { seed } from './seed/seed';
 
 initializeApp();
 const db = getFirestore();
@@ -145,14 +146,15 @@ export const submitUserProfile = onCall(
   }
 );
 
-export const selectGymAndPayment = onCall({ cors: true }, async (request) => {
+export const selectGymAndPayment = onCall(
+  { cors: true }, async (request) => {
     const uid = request.auth?.uid;
     if (!uid) {
       throw new HttpsError('unauthenticated', 'User must be authenticated.');
     }
-  
+
     const { gym, paymentInfo } = request.data;
-  
+
     if (gym == null || paymentInfo == null) {
       throw new HttpsError('invalid-argument', 'Missing gym or paymentInfo.');
     }
@@ -164,18 +166,30 @@ export const selectGymAndPayment = onCall({ cors: true }, async (request) => {
     if (typeof gym !== 'number') {
       throw new HttpsError('invalid-argument', 'Gym must be a number.');
     }
-  
+
     // 🔍 Check if gym exists by querying /gyms where id == gym
     const gymQuery = await db.collection('gyms').where('id', '==', gym).limit(1).get();
-  
+
     if (gymQuery.empty) {
       throw new HttpsError('not-found', `Gym with id ${gym} not found.`);
     }
-  
+
     // ✅ Update user's gym and payment info
     await db.collection('users').doc(uid).update({
       gym
     });
-  
+
     return { success: true };
-  });
+  }
+);
+
+export const seedExercises = onRequest(
+  {cors: true}, async (req, res) => {
+    await seed();
+
+    res.json({ 
+      success: true, 
+      message: "Exercises seeded successfully!",
+    });
+  }
+);

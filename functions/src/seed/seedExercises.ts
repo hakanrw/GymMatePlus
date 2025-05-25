@@ -15,7 +15,7 @@ const exercises = [
     targetMuscles: ["Pectoralis Major", "Anterior Deltoids", "Triceps"],
     equipment: "Barbell",
     difficulty: "Intermediate",
-    imageUrl: "https://example.com/bench-press.jpg"
+    imageUrl: "https://cdn.mos.cms.futurecdn.net/pLaRi5jXSHDKu6WRydetBo-650-80.jpg.webp"
   },
   {
     name: "Bicep Curls",
@@ -31,7 +31,7 @@ const exercises = [
     targetMuscles: ["Biceps Brachii", "Brachialis"],
     equipment: "Dumbbells",
     difficulty: "Beginner",
-    imageUrl: "https://example.com/bicep-curls.jpg"
+    imageUrl: "https://hips.hearstapps.com/hmg-prod/images/dumbbell-workout-royalty-free-image-1703068569.jpg"
   },
   {
     name: "Squats",
@@ -47,7 +47,7 @@ const exercises = [
     targetMuscles: ["Gluteus Maximus", "Quadriceps", "Hamstrings"],
     equipment: "Bodyweight",
     difficulty: "Beginner",
-    imageUrl: "https://example.com/squats.jpg"
+    imageUrl: "https://media.glamourmagazine.co.uk/photos/6138a5b2236c41e831489fec/16:9/w_2240,c_limit/gettyimages-1219540136_sf.jpg"
   },
   {
     name: "Treadmill Running",
@@ -63,7 +63,7 @@ const exercises = [
     targetMuscles: ["Cardiovascular System", "Legs", "Core"],
     equipment: "Treadmill",
     difficulty: "Beginner",
-    imageUrl: "https://example.com/treadmill.jpg"
+    imageUrl: "https://cdn.prod.website-files.com/667e874f45b06e6a2960bd2e/678cc2edf00c3325b4efa626_enjoy-treadmill-runs.webp"
   },
   {
     name: "Push-ups",
@@ -79,7 +79,7 @@ const exercises = [
     targetMuscles: ["Pectoralis Major", "Anterior Deltoids", "Triceps", "Core"],
     equipment: "Bodyweight",
     difficulty: "Beginner",
-    imageUrl: "https://example.com/push-ups.jpg"
+    imageUrl: "https://www.formlakal.com/wp-content/uploads/2023/10/wsi-imageoptim-0-Push-Up-Hareketi-Nasil-Yapilir_.jpg"
   },
   {
     name: "Hammer Curls",
@@ -95,7 +95,7 @@ const exercises = [
     targetMuscles: ["Biceps Brachii", "Brachialis", "Brachioradialis"],
     equipment: "Dumbbells",
     difficulty: "Beginner",
-    imageUrl: "https://example.com/hammer-curls.jpg"
+    imageUrl: "https://www.shape.com/thmb/zM_afeI7D3spw4da9OqU4-KDGR0=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/hammer-curls-form-5c6c9cfb28f34c8e97cd64812156a9d1.jpg"
   }
 ];
 
