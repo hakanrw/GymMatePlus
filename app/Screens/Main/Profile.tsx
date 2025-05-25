@@ -14,9 +14,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Container } from '@/components/Container';
 import { Ionicons } from "@expo/vector-icons";
-import { LineChart, BarChart } from 'react-native-chart-kit';
+import { LineChart } from 'react-native-chart-kit';
 import { auth } from '../../firebaseConfig';
-import { doc, getDoc, getFirestore, collection, addDoc, query, orderBy, limit, where, getDocs } from '@firebase/firestore';
+import { doc, getDoc, getFirestore, collection, addDoc, query, orderBy, limit, where, getDocs, updateDoc } from '@firebase/firestore';
 import { MainButton } from '@/components/MainButton';
 import { signOut } from 'firebase/auth';
 
@@ -43,16 +43,12 @@ interface ChartData {
 
 const Profile = () => {
     const navigation = useNavigation() as any;
-    const [selectedTab, setSelectedTab] = useState<'weight' | 'bmi' | 'workouts' | 'strength'>('weight');
+    const [selectedTab, setSelectedTab] = useState<'weight' | 'bmi'>('weight');
     const [userData, setUserData] = useState<any>(null);
     const [fitnessData, setFitnessData] = useState<FitnessData[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddDataModal, setShowAddDataModal] = useState(false);
     const [newWeight, setNewWeight] = useState('');
-    const [newExercise, setNewExercise] = useState('');
-    const [newWeight2, setNewWeight2] = useState(''); // For strength tracking
-    const [newReps, setNewReps] = useState('');
-    const [newSets, setNewSets] = useState('');
     const defaultProfilePic = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
     const [profilePicError, setProfilePicError] = useState(false);
     const [photoURL, setPhotoURL] = useState<string | null>(null);
@@ -88,28 +84,59 @@ const Profile = () => {
         
         try {
             const fitnessRef = collection(getFirestore(), 'fitnessData');
-            const q = query(
-                fitnessRef,
-                where('userId', '==', auth.currentUser.uid),
-                orderBy('date', 'desc'),
-                limit(30)
-            );
             
-            const querySnapshot = await getDocs(q);
-            const data: FitnessData[] = [];
-            
-            querySnapshot.forEach((doc) => {
-                const docData = doc.data();
-                data.push({
-                    id: doc.id,
-                    ...docData,
-                    date: docData.date.toDate()
-                } as FitnessData);
-            });
-            
-            setFitnessData(data);
+            // Try the optimized query first (requires index)
+            try {
+                const q = query(
+                    fitnessRef,
+                    where('userId', '==', auth.currentUser.uid),
+                    orderBy('date', 'desc'),
+                    limit(30)
+                );
+                
+                const querySnapshot = await getDocs(q);
+                const data: FitnessData[] = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const docData = doc.data();
+                    data.push({
+                        id: doc.id,
+                        ...docData,
+                        date: docData.date.toDate()
+                    } as FitnessData);
+                });
+                
+                setFitnessData(data);
+            } catch (indexError) {
+                console.log('Index not ready, using fallback query:', indexError);
+                
+                // Fallback: simpler query without orderBy (doesn't require index)
+                const fallbackQuery = query(
+                    fitnessRef,
+                    where('userId', '==', auth.currentUser.uid),
+                    limit(50)
+                );
+                
+                const querySnapshot = await getDocs(fallbackQuery);
+                const data: FitnessData[] = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const docData = doc.data();
+                    data.push({
+                        id: doc.id,
+                        ...docData,
+                        date: docData.date.toDate()
+                    } as FitnessData);
+                });
+                
+                // Sort manually and limit to 30
+                data.sort((a, b) => b.date.getTime() - a.date.getTime());
+                setFitnessData(data.slice(0, 30));
+            }
         } catch (error) {
             console.error('Error fetching fitness data:', error);
+            // Set empty data so the UI still works
+            setFitnessData([]);
         }
     };
 
@@ -129,7 +156,20 @@ const Profile = () => {
             };
             
             await addDoc(fitnessRef, newData);
-            await fetchFitnessData(); // Refresh data
+            
+            // If adding weight data, also update the user's current weight
+            if (type === 'weight') {
+                const userRef = doc(getFirestore(), 'users', auth.currentUser.uid);
+                await updateDoc(userRef, { weight: value });
+                
+                // Refresh user data to update the display
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    setUserData(docSnap.data());
+                }
+            }
+            
+            await fetchFitnessData(); // Refresh fitness data
             Alert.alert('Success', 'Data added successfully!');
         } catch (error) {
             console.error('Error adding fitness data:', error);
@@ -146,29 +186,6 @@ const Profile = () => {
         
         await addFitnessData('weight', weight);
         setNewWeight('');
-        setShowAddDataModal(false);
-    };
-
-    const handleAddWorkout = async () => {
-        await addFitnessData('workout', 1); // Just count workouts
-        setShowAddDataModal(false);
-    };
-
-    const handleAddStrength = async () => {
-        const weight = parseFloat(newWeight2);
-        const reps = parseInt(newReps);
-        const sets = parseInt(newSets);
-        
-        if (isNaN(weight) || isNaN(reps) || isNaN(sets) || !newExercise.trim()) {
-            Alert.alert('Error', 'Please fill all fields with valid values');
-            return;
-        }
-        
-        await addFitnessData('strength', weight, newExercise.trim(), reps, sets);
-        setNewExercise('');
-        setNewWeight2('');
-        setNewReps('');
-        setNewSets('');
         setShowAddDataModal(false);
     };
 
@@ -189,6 +206,12 @@ const Profile = () => {
         const now = new Date();
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         
+        const formatDate = (date: Date) => {
+            const month = date.toLocaleDateString('en-US', { month: 'short' });
+            const day = date.getDate();
+            return `${month} ${day}`;
+        };
+        
         switch (selectedTab) {
             case 'weight':
                 const weightData = fitnessData
@@ -198,13 +221,13 @@ const Profile = () => {
                 
                 if (weightData.length === 0) {
                     return {
-                        labels: ['No Data'],
+                        labels: ['Current'],
                         datasets: [{ data: [userData?.weight || 70] }]
                     };
                 }
                 
                 return {
-                    labels: weightData.map(d => `${d.date.getDate()}/${d.date.getMonth() + 1}`),
+                    labels: weightData.map(d => formatDate(d.date)),
                     datasets: [{ 
                         data: weightData.map(d => d.value),
                         color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`
@@ -228,72 +251,10 @@ const Profile = () => {
                 }
                 
                 return {
-                    labels: bmiData.map(d => `${d.date.getDate()}/${d.date.getMonth() + 1}`),
+                    labels: bmiData.map(d => formatDate(d.date)),
                     datasets: [{ 
                         data: bmiData.map(d => userData?.height ? d.value / ((userData.height / 100) ** 2) : 22),
                         color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`
-                    }]
-                };
-                
-            case 'workouts':
-                // Group workouts by week
-                const workoutsByWeek: { [key: string]: number } = {};
-                const workoutData = fitnessData.filter(d => d.type === 'workout' && d.date >= thirtyDaysAgo);
-                
-                for (let i = 0; i < 4; i++) {
-                    const weekStart = new Date(now.getTime() - (i * 7 * 24 * 60 * 60 * 1000));
-                    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    const weekLabel = `W${4-i}`;
-                    
-                    workoutsByWeek[weekLabel] = workoutData.filter(d => 
-                        d.date >= weekStart && d.date < weekEnd
-                    ).length;
-                }
-                
-                return {
-                    labels: Object.keys(workoutsByWeek),
-                    datasets: [{ 
-                        data: Object.values(workoutsByWeek),
-                        color: (opacity = 1) => `rgba(168, 85, 247, ${opacity})`
-                    }]
-                };
-                
-            case 'strength':
-                // Show max weight for most recent exercise
-                const strengthData = fitnessData
-                    .filter(d => d.type === 'strength' && d.date >= thirtyDaysAgo)
-                    .sort((a, b) => a.date.getTime() - b.date.getTime());
-                
-                if (strengthData.length === 0) {
-                    return {
-                        labels: ['No Data'],
-                        datasets: [{ data: [0] }]
-                    };
-                }
-                
-                // Group by exercise and get latest entries
-                const exerciseGroups: { [key: string]: FitnessData[] } = {};
-                strengthData.forEach(d => {
-                    if (d.exerciseName) {
-                        if (!exerciseGroups[d.exerciseName]) {
-                            exerciseGroups[d.exerciseName] = [];
-                        }
-                        exerciseGroups[d.exerciseName].push(d);
-                    }
-                });
-                
-                // Get the most tracked exercise
-                const mostTrackedExercise = Object.keys(exerciseGroups).reduce((a, b) => 
-                    exerciseGroups[a].length > exerciseGroups[b].length ? a : b
-                );
-                
-                const exerciseData = exerciseGroups[mostTrackedExercise]?.slice(-6) || [];
-                
-                return {
-                    labels: exerciseData.map((d, i) => `S${i + 1}`),
-                    datasets: [{ 
-                        data: exerciseData.map(d => d.value),
-                        color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`
                     }]
                 };
                 
@@ -306,8 +267,6 @@ const Profile = () => {
         switch (selectedTab) {
             case 'weight': return 'Weight Progress (kg)';
             case 'bmi': return 'BMI History';
-            case 'workouts': return 'Weekly Workouts';
-            case 'strength': return 'Strength Progress (kg)';
             default: return 'Progress';
         }
     };
@@ -327,54 +286,6 @@ const Profile = () => {
                         />
                         <TouchableOpacity style={styles.modalButton} onPress={handleAddWeight}>
                             <Text style={styles.modalButtonText}>Add Weight</Text>
-                        </TouchableOpacity>
-                    </View>
-                );
-            case 'workouts':
-                return (
-                    <View>
-                        <Text style={styles.modalTitle}>Log Workout</Text>
-                        <Text style={styles.modalDescription}>This will add one workout to today's count</Text>
-                        <TouchableOpacity style={styles.modalButton} onPress={handleAddWorkout}>
-                            <Text style={styles.modalButtonText}>Log Workout</Text>
-                        </TouchableOpacity>
-                    </View>
-                );
-            case 'strength':
-                return (
-                    <View>
-                        <Text style={styles.modalTitle}>Add Strength Entry</Text>
-                        <TextInput
-                            style={styles.modalInput}
-                            placeholder="Exercise name"
-                            value={newExercise}
-                            onChangeText={setNewExercise}
-                        />
-                        <TextInput
-                            style={styles.modalInput}
-                            placeholder="Weight (kg)"
-                            value={newWeight2}
-                            onChangeText={setNewWeight2}
-                            keyboardType="numeric"
-                        />
-                        <View style={styles.modalRow}>
-                            <TextInput
-                                style={[styles.modalInput, styles.modalInputHalf]}
-                                placeholder="Sets"
-                                value={newSets}
-                                onChangeText={setNewSets}
-                                keyboardType="numeric"
-                            />
-                            <TextInput
-                                style={[styles.modalInput, styles.modalInputHalf]}
-                                placeholder="Reps"
-                                value={newReps}
-                                onChangeText={setNewReps}
-                                keyboardType="numeric"
-                            />
-                        </View>
-                        <TouchableOpacity style={styles.modalButton} onPress={handleAddStrength}>
-                            <Text style={styles.modalButtonText}>Add Entry</Text>
                         </TouchableOpacity>
                     </View>
                 );
@@ -471,8 +382,6 @@ const Profile = () => {
                     {[
                         { key: 'weight', label: 'Weight', icon: 'fitness' },
                         { key: 'bmi', label: 'BMI', icon: 'analytics' },
-                        { key: 'workouts', label: 'Workouts', icon: 'barbell' },
-                        { key: 'strength', label: 'Strength', icon: 'trophy' }
                     ].map((tab) => (
                         <TouchableOpacity
                             key={tab.key}
@@ -513,53 +422,30 @@ const Profile = () => {
                         )}
                     </View>
                     
-                    {selectedTab === 'workouts' ? (
-                        <BarChart
-                            data={chartData}
-                            width={Dimensions.get('window').width - 48}
-                            height={220}
-                            yAxisLabel=""
-                            yAxisSuffix=""
-                            chartConfig={{
-                                backgroundColor: '#fff',
-                                backgroundGradientFrom: '#fff',
-                                backgroundGradientTo: '#fff',
-                                decimalPlaces: 0,
-                                color: (opacity = 1) => `rgba(168, 85, 247, ${opacity})`,
-                                labelColor: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
-                            }}
-                            style={{
-                                borderRadius: 16,
-                                marginTop: 8,
-                                alignSelf: 'center',
-                            }}
-                        />
-                    ) : (
-                        <LineChart
-                            data={chartData}
-                            width={Dimensions.get('window').width - 48}
-                            height={220}
-                            chartConfig={{
-                                backgroundColor: '#fff',
-                                backgroundGradientFrom: '#fff',
-                                backgroundGradientTo: '#fff',
-                                decimalPlaces: selectedTab === 'bmi' ? 1 : 0,
-                                color: chartData.datasets[0].color || ((opacity = 1) => `rgba(0, 122, 255, ${opacity})`),
-                                labelColor: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
-                                propsForDots: {
-                                    r: '4',
-                                    strokeWidth: '2',
-                                    stroke: chartData.datasets[0].color ? chartData.datasets[0].color(1) : '#007AFF',
-                                },
-                            }}
-                            bezier
-                            style={{
-                                borderRadius: 16,
-                                marginTop: 8,
-                                alignSelf: 'center',
-                            }}
-                        />
-                    )}
+                    <LineChart
+                        data={chartData}
+                        width={Dimensions.get('window').width - 48}
+                        height={220}
+                        chartConfig={{
+                            backgroundColor: '#fff',
+                            backgroundGradientFrom: '#fff',
+                            backgroundGradientTo: '#fff',
+                            decimalPlaces: selectedTab === 'bmi' ? 1 : 0,
+                            color: chartData.datasets[0].color || ((opacity = 1) => `rgba(0, 122, 255, ${opacity})`),
+                            labelColor: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
+                            propsForDots: {
+                                r: '4',
+                                strokeWidth: '2',
+                                stroke: chartData.datasets[0].color ? chartData.datasets[0].color(1) : '#007AFF',
+                            },
+                        }}
+                        bezier
+                        style={{
+                            borderRadius: 16,
+                            marginTop: 8,
+                            alignSelf: 'center',
+                        }}
+                    />
                 </View>
 
                 {/* Fitness Goals */}
