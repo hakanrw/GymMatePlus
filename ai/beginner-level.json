@@ -1,0 +1,146 @@
+{
+  "level": "beginner",
+  "description": "Başlangıç seviyesindeki kullanıcılar için antrenman programı ve yapay zeka özelliklerini içerir",
+  "aiFeatures": {
+    "workoutOptimization": {
+      "pumpThreshold": 3,
+      "fatigueThreshold": 3,
+      "jointPainThreshold": 3,
+      "workoutModifications": {
+        "weightReduction": "Harekette yorgunluk veya eklem ağrısı 3+ yıldız ise ağırlık düşürülmesi önerilir",
+        "exerciseChange": "Bir harekette 3 hafta boyunca yüksek eklem ağrısı (3+ yıldız) veya yorgunluk varsa hareket değişimi önerilir"
+      }
+    },
+    "exerciseData": {
+      "structure": {
+        "targetMuscle": "Tükenişe giden hedef bölge",
+        "assistMuscles": "Hareket izole değilse, diğer çalışan yardımcı bölgeler",
+        "fatigueScore": "5 üzerinden yıldız ile",
+        "compoundStatus": "Bileşik / İzole",
+        "mainExerciseStatus": "Ana hareket / İkincil Aksesuar Hareket / Üçüncül Aksesuar Hareket"
+      }
+    },
+    "progressionLogic": {
+      "jointPain": {
+        "level1": "Hareketin ağırlığı arttırılmaz",
+        "level2": "Ağırlık tekrar alt sınırına düşürülür (sabit tekrarlı hareketler için 2.5 kg düşüş)",
+        "level3": "Hareket tekrar alt sınırına düşürülür ve ağırlık düşürülür (sabit tekrarlı hareketler için 10 kg düşüş)",
+        "level4Plus": "Alternatif hareket önerilir"
+      },
+      "pump": {
+        "regular": {
+          "threshold": 3,
+          "belowThreshold": "Ağırlık arttırılmaz"
+        },
+        "fatLoss": {
+          "threshold": 2,
+          "belowThreshold": "Pump 1 ve altında ise ağırlık arttırılmaz"
+        }
+      },
+      "overloadConditions": "Hareket tamamlandıysa + Eklem ağrısı şartı sağlanıyorsa + Pump şartı sağlanıyorsa"
+    }
+  },
+  "trainingStructure": {
+    "muscleGroups": [
+      "Göğüs (üst göğüs ve tüm göğüs olarak ayrılabilir)",
+      "Sırt (lat, orta sırt, ve bel olarak ayrılabilir)",
+      "Quadriceps",
+      "Hamstring",
+      "Biceps",
+      "Triceps",
+      "Kalça",
+      "Omuz (ön, yan ve arka omuz kasları)"
+    ],
+    "mainExercises": [
+      "Bench press",
+      "Overhead press",
+      "Squat",
+      "Deadlift",
+      "Dips",
+      "Barfiks",
+      "Barbell row"
+    ],
+    "secondaryExercises": [
+      "Smith bench press",
+      "Romanian Deadlift",
+      "Smith squat",
+      "Smith deadlift",
+      "Chest press",
+      "Incline dumbell press",
+      "Dumbel press",
+      "Front squat",
+      "Lat pulldown",
+      "Seated row",
+      "Destekli barfiks",
+      "Destekli dips",
+      "Dumbell row",
+      "Leg press",
+      "Hack squat"
+    ],
+    "tertiaryExercises": [
+      "Dumbell curl",
+      "Incline curl",
+      "Barbell curl",
+      "Triceps extantion",
+      "Side raise",
+      "Facepull/rear delt raise",
+      "Leg extantion",
+      "Leg curl",
+      "Chest fly",
+      "Rope pullover"
+    ],
+    "parameters": {
+      "gender": {
+        "male": "Üst gövde öncelikli",
+        "female": "Alt gövde öncelikli"
+      },
+      "experience": "Başlangıç",
+      "goal": ["Yağ yakımı", "Kas kazanımı"],
+      "priorityArea": "Başlangıç için uygulanmaz",
+      "trainingStyle": "Başlangıç için uygulanmaz",
+      "daysPerWeek": {
+        "2": "fullbody",
+        "3": "fullbody"
+      }
+    },
+    "setRepetitionRanges": {
+      "mainExercises": "4-8 tekrar arası, RIR 2-3",
+      "secondaryExercises": "8-12 tekrar arası, RIR 1-2",
+      "tertiaryExercises": "10-15 tekrar arası, genelde RIR 0"
+    },
+    "weeklyFrequency": {
+      "muscleGroupsPerWeek": "Haftada en az 2 kere",
+      "dailyVolumePerMuscle": "5-6 set maksimum",
+      "weeklyVolumePerMuscle": "10-15 set maksimum"
+    },
+    "cardio": {
+      "fatLoss": {
+        "startingDuration": "40 dk/hafta",
+        "maxDuration": "120 dk/hafta",
+        "progression": "Haftalık 5 dk artış"
+      }
+    }
+  },
+  "sampleProgram": {
+    "threeDay": {
+      "dayOne": [
+        {"exercise": "Squat", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Bench Press", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Ağırlıklı Barfiks", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Dumbell curl", "sets": 3, "reps": "10-15", "rir": "0-1"}
+      ],
+      "dayTwo": [
+        {"exercise": "Squat", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Overhead Press", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Deadlift", "sets": 1, "reps": 5, "rir": "2-3"},
+        {"exercise": "Facepull", "sets": 3, "reps": "10-15", "rir": "0-1"}
+      ],
+      "dayThree": [
+        {"exercise": "Squat", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Bench Press", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Bentover Row", "sets": 5, "reps": 5, "rir": "2-3"},
+        {"exercise": "Triceps extantion", "sets": 3, "reps": "10-15", "rir": "0-1"}
+      ]
+    }
+  }
+}
