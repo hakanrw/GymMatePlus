@@ -36,6 +36,8 @@ import PaymentSuccess from './Screens/GymSelection/PaymentSuccess';
 import UserSelection from './Screens/Main/UserSelection';
 import CoachCalendar from './Screens/Main/CoachCalendar';
 import ProgramEditor from './Screens/Main/ProgramEditor';
+import ExerciseDetail from './Screens/Main/ExerciseDetail';
+import AreaExercises from './Screens/Main/AreaExercises';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -107,6 +109,16 @@ function AppStack() {
                     headerShown: false,
                     presentation: 'modal'
                 }}
+            />
+            <Stack.Screen
+                name="ExerciseDetail"
+                component={ExerciseDetail}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AreaExercises"
+                component={AreaExercises}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );

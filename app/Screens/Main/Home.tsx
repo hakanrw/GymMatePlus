@@ -17,7 +17,7 @@ import { Container } from '@/components/Container';
 import { Dumbell } from '@/components/Dumbell';
 import { Search } from '@/components/SearchBar';
 import { FontAwesome } from '@expo/vector-icons';
-import { collection, query, where, getDocs, FirestoreError } from '@firebase/firestore';
+import { collection, query, where, getDocs, FirestoreError, limit } from '@firebase/firestore';
 import { firestore, auth } from '../../firebaseConfig';
 
 interface User {
@@ -27,10 +27,18 @@ interface User {
     email: string;
 }
 
+interface Exercise {
+    id: string;
+    name: string;
+    area: string;
+    imageUrl?: string;
+}
+
 const Home = () => {
     const navigation = useNavigation() as any;
     const [searchResults, setSearchResults] = useState<User[]>([]);
     const [showResults, setShowResults] = useState(false);
+    const [featuredExercises, setFeaturedExercises] = useState<Exercise[]>([]);
     const searchContainerRef = useRef<View>(null);
 
     useEffect(() => {
@@ -51,6 +59,30 @@ const Home = () => {
             };
         }
     }, []);
+
+    useEffect(() => {
+        fetchFeaturedExercises();
+    }, []);
+
+    const fetchFeaturedExercises = async () => {
+        try {
+            const exercisesRef = collection(firestore, 'exercises');
+            const q = query(exercisesRef, limit(6)); // Get first 6 exercises as featured
+            const querySnapshot = await getDocs(q);
+            
+            const exercises: Exercise[] = [];
+            querySnapshot.forEach((doc) => {
+                exercises.push({
+                    id: doc.id,
+                    ...doc.data()
+                } as Exercise);
+            });
+
+            setFeaturedExercises(exercises);
+        } catch (error) {
+            console.error('Error fetching featured exercises:', error);
+        }
+    };
 
     const handleSearch = async (searchText: string) => {
         if (searchText.length < 2) {
@@ -97,17 +129,19 @@ const Home = () => {
         navigation.navigate('UserProfile', { userId: user.id });
     };
 
+    const handleAreaPress = (area: string) => {
+        navigation.navigate('AreaExercises', { area });
+    };
+
+    const handleExercisePress = (exerciseId: string) => {
+        navigation.navigate('ExerciseDetail', { exerciseId });
+    };
+
     const areaValues = [
         ['Chest', require('../../../assets/images/area/Chest.png')], 
         ['Biceps', require('../../../assets/images/area/Biceps.png')], 
         ['Glutes', require('../../../assets/images/area/Glutes.png')], 
         ['Cardio', require('../../../assets/images/area/Cardio.png')]
-    ];
-
-    const exerciseValues = [
-        ['Chest', 'Chest Press', require('../../../assets/images/excercise/Chest.png')], 
-        ['Biceps', 'Bicep Curl', require('../../../assets/images/excercise/Biceps.png')], 
-        ['Cardio', 'Treadmill', require('../../../assets/images/excercise/Cardio.png')]
     ];
 
     return (
@@ -158,25 +192,44 @@ const Home = () => {
                 </Text>
                 <ScrollView style={styles.scroll} horizontal>
                     {areaValues.map(val =>    
-                        <View key={val[0]} style={styles.areaElement}>
+                        <TouchableOpacity 
+                            key={val[0]} 
+                            style={styles.areaElement}
+                            onPress={() => handleAreaPress(val[0] as string)}
+                            activeOpacity={0.7}
+                        >
                             <Image source={val[1]} style={{height: 100, width: 100, borderRadius: 40}}/>
                             <Text>{val[0]}</Text>
-                        </View>
+                        </TouchableOpacity>
                     )}
                 </ScrollView>
 
                 <Text style={[styles.title, {marginTop: 10}]}>
-                    Exercises
+                    Featured Exercises
                     <View style={{width: 10}}></View>
                     <FontAwesome name='chevron-right' size={16}/>
                 </Text>
                 <ScrollView style={styles.scroll} horizontal>
-                    {exerciseValues.map(val =>    
-                        <View key={val[0]} style={styles.exerciseElement}>
-                            <Image source={val[2]} style={{height: 150, width: 150, borderRadius: 10, marginBottom: 10}}/>
-                            <Text style={{opacity: 0.6}}>{val[0]}</Text>
-                            <Text>{val[1]}</Text>
-                        </View>
+                    {featuredExercises.map(exercise =>    
+                        <TouchableOpacity 
+                            key={exercise.id} 
+                            style={styles.exerciseElement}
+                            onPress={() => handleExercisePress(exercise.id)}
+                            activeOpacity={0.7}
+                        >
+                            {exercise.imageUrl ? (
+                                <Image 
+                                    source={{ uri: exercise.imageUrl }} 
+                                    style={{height: 150, width: 150, borderRadius: 10, marginBottom: 10}}
+                                />
+                            ) : (
+                                <View style={styles.placeholderImage}>
+                                    <FontAwesome name="image" size={32} color="#ccc" />
+                                </View>
+                            )}
+                            <Text style={{opacity: 0.6}}>{exercise.area}</Text>
+                            <Text>{exercise.name}</Text>
+                        </TouchableOpacity>
                     )}
                 </ScrollView>
                 
@@ -274,5 +327,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginRight: 15,
         gap: 5
+    },
+    placeholderImage: {
+        height: 150,
+        width: 150,
+        borderRadius: 10,
+        marginBottom: 10,
+        backgroundColor: '#f5f5f5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

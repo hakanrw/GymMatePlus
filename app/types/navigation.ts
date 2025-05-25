@@ -27,6 +27,12 @@ export type RootStackParamList = {
             }[];
         };
     };
+    ExerciseDetail: {
+        exerciseId: string;
+    };
+    AreaExercises: {
+        area: string;
+    };
     // Add other screen params here
 };
 

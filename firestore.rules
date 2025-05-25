@@ -87,6 +87,12 @@ service cloud.firestore {
       allow write: if isAdmin(); // Only admin can modify gyms
     }
 
+    // Exercises collection
+    match /exercises/{exerciseId} {
+      allow read: if isAuthenticated(); // Any authenticated user can read exercises
+      allow write: if isAdmin(); // Only admin can modify exercises
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
