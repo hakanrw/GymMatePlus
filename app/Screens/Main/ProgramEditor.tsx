@@ -10,14 +10,21 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Container } from '@/components/Container';
-import { doc, getDoc, updateDoc } from '@firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs } from '@firebase/firestore';
 import { firestore } from '../../firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
+import Dropdown from '@/components/Dropdown';
 
 interface Exercise {
     exercise: string;
     sets: string;
     rpe: string;
+}
+
+interface FirebaseExercise {
+    id: string;
+    name: string;
+    area: string;
 }
 
 type WorkoutProgram = {
@@ -34,12 +41,72 @@ const ProgramEditor = () => {
 
     const [program, setProgram] = useState<WorkoutProgram>({});
     const [loading, setLoading] = useState(true);
+    const [exercises, setExercises] = useState<FirebaseExercise[]>([]);
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-    // Fetch the latest program data when component mounts
+    // Predefined options for sets and RPE
+    const setsOptions = [
+        { label: '1x5', value: '1x5' },
+        { label: '2x5', value: '2x5' },
+        { label: '3x5', value: '3x5' },
+        { label: '4x5', value: '4x5' },
+        { label: '5x5', value: '5x5' },
+        { label: '1x8', value: '1x8' },
+        { label: '2x8', value: '2x8' },
+        { label: '3x8', value: '3x8' },
+        { label: '4x8', value: '4x8' },
+        { label: '1x10', value: '1x10' },
+        { label: '2x10', value: '2x10' },
+        { label: '3x10', value: '3x10' },
+        { label: '4x10', value: '4x10' },
+        { label: '1x12', value: '1x12' },
+        { label: '2x12', value: '2x12' },
+        { label: '3x12', value: '3x12' },
+        { label: '4x12', value: '4x12' },
+        { label: '3x3-5', value: '3x3-5' },
+        { label: '4x4-6', value: '4x4-6' },
+        { label: '3x8-10', value: '3x8-10' },
+        { label: '3x10-12', value: '3x10-12' },
+    ];
+
+    const rpeOptions = [
+        { label: '6', value: '6' },
+        { label: '6-7', value: '6-7' },
+        { label: '7', value: '7' },
+        { label: '7-8', value: '7-8' },
+        { label: '8', value: '8' },
+        { label: '8-9', value: '8-9' },
+        { label: '9', value: '9' },
+        { label: '9-10', value: '9-10' },
+        { label: '10', value: '10' },
+    ];
+
+    // Fetch exercises and program data when component mounts
     useEffect(() => {
+        fetchExercises();
         fetchLatestProgram();
     }, [traineeId]);
+
+    const fetchExercises = async () => {
+        try {
+            const exercisesRef = collection(firestore, 'exercises');
+            const querySnapshot = await getDocs(exercisesRef);
+            
+            const exercisesList: FirebaseExercise[] = [];
+            querySnapshot.forEach((doc) => {
+                exercisesList.push({
+                    id: doc.id,
+                    name: doc.data().name,
+                    area: doc.data().area,
+                });
+            });
+
+            setExercises(exercisesList);
+        } catch (error) {
+            console.error('Error fetching exercises:', error);
+            Alert.alert('Error', 'Failed to load exercises');
+        }
+    };
 
     const fetchLatestProgram = async () => {
         try {
@@ -56,7 +123,7 @@ const ProgramEditor = () => {
     };
 
     const handleAddExercise = (day: string) => {
-        const newExercise = { exercise: 'New Exercise', sets: '3x10', rpe: '7' };
+        const newExercise = { exercise: '', sets: '3x10', rpe: '7' };
         setProgram(prev => ({
             ...prev,
             [day]: [...(prev[day] || []), newExercise]
@@ -91,6 +158,12 @@ const ProgramEditor = () => {
             Alert.alert('Error', 'Failed to save program');
         }
     };
+
+    // Convert exercises to dropdown options
+    const exerciseOptions = exercises.map(exercise => ({
+        label: `${exercise.name} (${exercise.area})`,
+        value: exercise.name
+    }));
 
     if (loading) {
         return (
@@ -127,30 +200,34 @@ const ProgramEditor = () => {
 
                         {program[day]?.map((exercise, index) => (
                             <View key={index} style={styles.exerciseRow}>
-                                <TextInput
-                                    style={styles.exerciseInput}
-                                    value={exercise.exercise}
-                                    onChangeText={(value) => 
+                                <Dropdown
+                                    options={exerciseOptions}
+                                    selectedValue={exercise.exercise}
+                                    onSelect={(value: string) => 
                                         handleUpdateExercise(day, index, 'exercise', value)
                                     }
-                                    placeholder="Exercise name"
+                                    placeholder="Select exercise"
+                                    searchable={true}
+                                    style={styles.exerciseDropdown}
                                 />
                                 <View style={styles.exerciseDetails}>
-                                    <TextInput
-                                        style={styles.setsInput}
-                                        value={exercise.sets}
-                                        onChangeText={(value) => 
+                                    <Dropdown
+                                        options={setsOptions}
+                                        selectedValue={exercise.sets}
+                                        onSelect={(value: string) => 
                                             handleUpdateExercise(day, index, 'sets', value)
                                         }
                                         placeholder="Sets"
+                                        style={styles.setsDropdown}
                                     />
-                                    <TextInput
-                                        style={styles.rpeInput}
-                                        value={exercise.rpe}
-                                        onChangeText={(value) => 
+                                    <Dropdown
+                                        options={rpeOptions}
+                                        selectedValue={exercise.rpe}
+                                        onSelect={(value: string) => 
                                             handleUpdateExercise(day, index, 'rpe', value)
                                         }
                                         placeholder="RPE"
+                                        style={styles.rpeDropdown}
                                     />
                                     <TouchableOpacity 
                                         onPress={() => handleDeleteExercise(day, index)}
@@ -228,30 +305,19 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 12,
     },
-    exerciseInput: {
-        fontSize: 16,
+    exerciseDropdown: {
         marginBottom: 8,
-        padding: 8,
-        backgroundColor: '#f8f8f8',
-        borderRadius: 4,
     },
     exerciseDetails: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 8,
     },
-    setsInput: {
+    setsDropdown: {
         flex: 1,
-        padding: 8,
-        marginRight: 8,
-        backgroundColor: '#f8f8f8',
-        borderRadius: 4,
     },
-    rpeInput: {
+    rpeDropdown: {
         flex: 1,
-        padding: 8,
-        marginRight: 8,
-        backgroundColor: '#f8f8f8',
-        borderRadius: 4,
     },
     deleteButton: {
         padding: 8,
