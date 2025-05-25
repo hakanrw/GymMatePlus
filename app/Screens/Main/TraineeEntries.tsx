@@ -171,10 +171,10 @@ const TraineeEntries = () => {
     };
 
     const formatDuration = (minutes: number | null) => {
-        if (!minutes) return 'In progress';
+        if (minutes === null || minutes === undefined) return 'In progress';
         
         const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
+        const mins = Math.round(minutes % 60);
         
         if (hours > 0) {
             return `${hours}h ${mins}m`;

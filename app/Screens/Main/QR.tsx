@@ -167,8 +167,8 @@ const QR = () => {
                 setTimeout(() => setCooldown(false), 3000);
 
                 Alert.alert(
-                    "Gym Check-Out",
-                    `Thanks for your workout!\n\nSession Duration: ${duration} minutes\nEntry: ${entryTime.toLocaleTimeString()}\nExit: ${exitTime.toLocaleTimeString()}`
+                    "Goodbye! 👋",
+                    `Thanks for your workout!\n\nSession Duration: ${duration} minutes\nEntry: ${entryTime.toLocaleTimeString()}\nExit: ${exitTime.toLocaleTimeString()}\n\nSee you next time!`
                 );
             } else {
                 // User is checking in
@@ -192,8 +192,8 @@ const QR = () => {
                 setTimeout(() => setCooldown(false), 3000);
 
                 Alert.alert(
-                    "Gym Check-In",
-                    `Welcome to the gym!\n\nEntry Time: ${entryTime.toLocaleTimeString()}\nEnjoy your workout!`
+                    "Welcome! 💪",
+                    `Welcome to the gym!\n\nEntry Time: ${entryTime.toLocaleTimeString()}\n\nEnjoy your workout and crush your goals!`
                 );
             }
 
