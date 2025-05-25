@@ -68,7 +68,25 @@ function GymSelectionStack() {
         </Stack.Navigator>
     );
 }
-  
+
+function HomeStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="HomeMain" component={Home} options={{ headerShown: false }} />
+            <Stack.Screen
+                name="ExerciseDetail"
+                component={ExerciseDetail}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AreaExercises"
+                component={AreaExercises}
+                options={{ headerShown: false }}
+            />
+        </Stack.Navigator>
+    );
+}
+
 function AppStack() {
     return (
         <Stack.Navigator>
@@ -109,16 +127,6 @@ function AppStack() {
                     headerShown: false,
                     presentation: 'modal'
                 }}
-            />
-            <Stack.Screen
-                name="ExerciseDetail"
-                component={ExerciseDetail}
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="AreaExercises"
-                component={AreaExercises}
-                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );
@@ -200,7 +208,7 @@ function MainTabs() {
           },
           tabBarShowLabel: false
     }}>
-      <Tab.Screen name="Home" component={Home} options={{tabBarIcon: ({color,size}) => <FontAwesome name="home" size={size} color={color}/>}}/>
+      <Tab.Screen name="Home" component={HomeStack} options={{tabBarIcon: ({color,size}) => <FontAwesome name="home" size={size} color={color}/>}}/>
       <Tab.Screen name="Calendar" component={Calendar} options={{tabBarIcon: ({color,size}) => <FontAwesome name="calendar" size={size} color={color}/>}}/>
       <Tab.Screen
         name="QR"
