@@ -9,6 +9,9 @@ def get_level_specific_data(experience_level):
         "başlangıç": "beginner-level.json",
         "orta seviye": "intermediate-level.json",
         "ileri seviye": "advanced-level.json",
+        "beginner": "beginner-level.json",
+        "intermediate": "intermediate-level.json",
+        "advanced": "advanced-level.json",
     }
 
     file_name = level_mapping.get(experience_level.lower())
@@ -16,37 +19,49 @@ def get_level_specific_data(experience_level):
         print(f"Uyarı: Geçersiz deneyim seviyesi: {experience_level}. Varsayılan olarak beginner-level.json kullanılıyor.")
         file_name = "beginner-level.json"
 
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, file_name)
+
     try:
-        with open(file_name, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     except FileNotFoundError:
-        print(f"HATA: JSON dosyası '{file_name}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
+        print(f"HATA: JSON dosyası '{file_path}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
         return None
     except Exception as e:
-        print(f"JSON dosyası '{file_name}' yüklenemedi: {e}")
+        print(f"JSON dosyası '{file_path}' yüklenemedi: {e}")
         return None
     
 def get_progression_data():
     progression = "progress-logic.json"
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, progression)
+    
     try:
-        with open(progression, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     except FileNotFoundError:
-        print(f"HATA: JSON dosyası '{progression}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
+        print(f"HATA: JSON dosyası '{file_path}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
         return None
     except Exception as e:
-        print(f"JSON dosyası '{progression}' yüklenemedi: {e}")
+        print(f"JSON dosyası '{file_path}' yüklenemedi: {e}")
         return None
 def get_exercises_logic_data():
     progression = "exercise-logic.json"
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, progression)
+    
     try:
-        with open(progression, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     except FileNotFoundError:
-        print(f"HATA: JSON dosyası '{progression}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
+        print(f"HATA: JSON dosyası '{file_path}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
         return None
     except Exception as e:
-        print(f"JSON dosyası '{progression}' yüklenemedi: {e}")
+        print(f"JSON dosyası '{file_path}' yüklenemedi: {e}")
         return None
 
 def generate_workout_program(user_info):
