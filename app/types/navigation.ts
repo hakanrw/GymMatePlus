@@ -28,7 +28,30 @@ export type RootStackParamList = {
         };
     };
     AIChat: undefined;
+    EntryHistory: undefined;
+    Settings: undefined;
+    TraineeEntries: undefined;
     // Add other screen params here
+};
+
+export type HomeStackParamList = {
+    HomeMain: undefined;
+    ExerciseDetail: {
+        exerciseId: string;
+    };
+    AreaExercises: {
+        area: string;
+    };
+};
+
+export type CalendarStackParamList = {
+    CalendarMain: undefined;
+    ExerciseDetail: {
+        exerciseId: string;
+    };
+    AreaExercises: {
+        area: string;
+    };
 };
 
 declare global {

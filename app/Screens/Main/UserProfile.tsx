@@ -12,8 +12,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Container } from '@/components/Container';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, deleteField, arrayUnion } from '@firebase/firestore';
-import { firestore, auth } from '../../firebaseConfig';
+import { firestore, auth, functions } from '../../firebaseConfig';
 import { MainButton } from '@/components/MainButton';
+import { httpsCallable } from 'firebase/functions';
 
 type AccountType = 'user' | 'coach' | 'admin';
 

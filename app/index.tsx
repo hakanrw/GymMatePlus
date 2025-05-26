@@ -37,6 +37,11 @@ import UserSelection from './Screens/Main/UserSelection';
 import CoachCalendar from './Screens/Main/CoachCalendar';
 import ProgramEditor from './Screens/Main/ProgramEditor';
 import AIChat from './Screens/Main/AIChat';
+import ExerciseDetail from './Screens/Main/ExerciseDetail';
+import AreaExercises from './Screens/Main/AreaExercises';
+import EntryHistory from './Screens/Main/EntryHistory';
+import Settings from './Screens/Main/Settings';
+import TraineeEntries from './Screens/Main/TraineeEntries';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -67,7 +72,43 @@ function GymSelectionStack() {
         </Stack.Navigator>
     );
 }
-  
+
+function CalendarStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="CalendarMain" component={Calendar} options={{ headerShown: false }} />
+            <Stack.Screen
+                name="ExerciseDetail"
+                component={ExerciseDetail}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AreaExercises"
+                component={AreaExercises}
+                options={{ headerShown: false }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+function HomeStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="HomeMain" component={Home} options={{ headerShown: false }} />
+            <Stack.Screen
+                name="ExerciseDetail"
+                component={ExerciseDetail}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AreaExercises"
+                component={AreaExercises}
+                options={{ headerShown: false }}
+            />
+        </Stack.Navigator>
+    );
+}
+
 function AppStack() {
     return (
         <Stack.Navigator>
@@ -116,6 +157,19 @@ function AppStack() {
                     headerShown: false,
                     presentation: 'modal'
                 }}
+                name="EntryHistory"
+                component={EntryHistory}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="Settings"
+                component={Settings}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="TraineeEntries"
+                component={TraineeEntries}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );
@@ -197,8 +251,8 @@ function MainTabs() {
           },
           tabBarShowLabel: false
     }}>
-      <Tab.Screen name="Home" component={Home} options={{tabBarIcon: ({color,size}) => <FontAwesome name="home" size={size} color={color}/>}}/>
-      <Tab.Screen name="Calendar" component={Calendar} options={{tabBarIcon: ({color,size}) => <FontAwesome name="calendar" size={size} color={color}/>}}/>
+      <Tab.Screen name="Home" component={HomeStack} options={{tabBarIcon: ({color,size}) => <FontAwesome name="home" size={size} color={color}/>}}/>
+      <Tab.Screen name="Calendar" component={CalendarStack} options={{tabBarIcon: ({color,size}) => <FontAwesome name="calendar" size={size} color={color}/>}}/>
       <Tab.Screen
         name="QR"
         component={QR}

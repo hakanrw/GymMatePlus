@@ -29,12 +29,13 @@ service cloud.firestore {
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated(); // Any authenticated user can read user profiles
-      allow create: if false; // Only firebase-functions can create user data
+      allow create: if request.auth != null; // Allow authenticated users to create their own profile (via Firebase Functions)
 
       allow update: if isOwner(userId) &&
                     isOnlyUpdatingAllowed() ||
                     isAdmin() || // Admins can update any user
-                    (isTraineeOfCoach(userId) && isOnlyUpdatingProgram()); // Coaches can update their trainees' programs
+                    (isTraineeOfCoach(userId) && isOnlyUpdatingProgram()) ||
+                    request.auth != null; // Allow Firebase Functions to update user data (coach assignment)
 
       // Programs subcollection - users can manage their own programs
       match /programs/{programId} {
@@ -91,6 +92,37 @@ service cloud.firestore {
     match /gyms/{gymId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin(); // Only admin can modify gyms
+    }
+
+    // Exercises collection
+    match /exercises/{exerciseId} {
+      allow read: if isAuthenticated(); // Any authenticated user can read exercises
+      allow write: if isAdmin(); // Only admin can modify exercises
+    }
+
+    // Fitness data collection
+    match /fitnessData/{dataId} {
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only read their own data
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId; // Users can only create data for themselves
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only update their own data
+      allow delete: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only delete their own data
+    }
+
+    // Gym entries collection
+    match /gymentries/{entryId} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || // Users can read their own gym entries
+         isCoach()); // Coaches can read all gym entries (they'll filter client-side)
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId; // Users can only create entries for themselves
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only update their own entries
+      allow delete: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId; // Users can only delete their own entries
     }
 
     // Default deny

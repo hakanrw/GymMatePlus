@@ -16,57 +16,11 @@ import { getAuth, GoogleAuthProvider, signInWithCredential, signInWithPopup } fr
 import { auth, firestore } from '../../firebaseConfig';
 import { GoogleSignin, isErrorWithCode, isSuccessResponse, SignInSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from '@firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../firebaseConfig';
 
-// Default program template
-const defaultProgram = {
-    Monday: [
-        { exercise: 'BB Back Squat', sets: '3x3-5', rpe: '7-8' },
-        { exercise: 'Bench Press', sets: '4x4-6', rpe: '7-8' },
-    ],
-    Wednesday: [
-        { exercise: 'Deadlift', sets: '3x5', rpe: '7-8' },
-        { exercise: 'OHP', sets: '3x8', rpe: '7-8' },
-    ],
-    Friday: [
-        { exercise: 'Front Squat', sets: '3x8', rpe: '7-8' },
-        { exercise: 'Row', sets: '3x10', rpe: '7-8' },
-    ],
-};
-
-async function assignRandomCoach(userId: string) {
-    try {
-        // Query for all coaches
-        const coachesQuery = query(
-            collection(firestore, 'users'),
-            where('accountType', '==', 'coach')
-        );
-        const coachesSnapshot = await getDocs(coachesQuery);
-
-        if (coachesSnapshot.empty) {
-            console.log('No coaches available, skipping coach assignment');
-            return null;
-        }
-
-        // Select a random coach
-        const coaches = coachesSnapshot.docs;
-        const randomCoach = coaches[Math.floor(Math.random() * coaches.length)];
-
-        // Update the user's coach field
-        await updateDoc(doc(firestore, 'users', userId), {
-            coach: randomCoach.id
-        });
-
-        // Add the user to the coach's trainees list
-        await updateDoc(doc(firestore, 'users', randomCoach.id), {
-            trainees: [...(randomCoach.data().trainees || []), userId]
-        });
-
-        return randomCoach.id;
-    } catch (error) {
-        console.error('Error assigning coach:', error);
-        return null;
-    }
-}
+// Get the createUser function
+const createUser = httpsCallable(functions, 'createUser');
 
 function SignUpScreen({ navigation }: any) {
     const [email, setEmail] = useState('');
@@ -83,23 +37,12 @@ function SignUpScreen({ navigation }: any) {
                 const result = await signInWithPopup(getAuth(), provider);
                 const user = result.user;
                 
-                // Store minimal user data in Firestore
-                const userRef = doc(firestore, 'users', user.uid);
-                const userDoc = await getDoc(userRef);
-                
-                if (!userDoc.exists()) {
-                    // Create the user document
-                    await setDoc(userRef, {
-                        onBoardingComplete: false,
-                        accountType: 'user',
-                        program: defaultProgram
-                    });
-
-                    // Assign a random coach
-                    const coachId = await assignRandomCoach(user.uid);
-                    if (!coachId) {
-                        console.log('No coach assigned during signup');
-                    }
+                // Call the Firebase Function to create user and assign coach
+                try {
+                    const result = await createUser();
+                    console.log('User creation result:', result.data);
+                } catch (error) {
+                    console.error('Error calling createUser function:', error);
                 }
                 
                 console.log("Successfully signed in with Google");
@@ -124,24 +67,14 @@ function SignUpScreen({ navigation }: any) {
                     const result = await signInWithCredential(getAuth(), credential);
                     const user = result.user;
                     
-                    // Store minimal user data in Firestore
-                    const userRef = doc(firestore, 'users', user.uid);
-                    const userDoc = await getDoc(userRef);
-                    
-                    if (!userDoc.exists()) {
-                        // Create the user document
-                        await setDoc(userRef, {
-                            onBoardingComplete: false,
-                            accountType: 'user',
-                            program: defaultProgram
-                        });
-
-                        // Assign a random coach
-                        const coachId = await assignRandomCoach(user.uid);
-                        if (!coachId) {
-                            console.log('No coach assigned during signup');
-                        }
+                    // Call the Firebase Function to create user and assign coach
+                    try {
+                        const result = await createUser();
+                        console.log('User creation result:', result.data);
+                    } catch (error) {
+                        console.error('Error calling createUser function:', error);
                     }
+                    
                     console.log("Successfully signed in with Google on mobile");
                 } else {
                     console.error("Failed to sign in with Google on mobile");
