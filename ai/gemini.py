@@ -136,21 +136,24 @@ Program yapısı {user_info['workout_days']} gün için:
 Yalnızca aşağıdaki JSON formatına sadık kalarak çıktı üret:
 
 {{
-  "program": [
-    {{
-      "day": "Gün 1",
-      "exercises": [
-        {{ "name": "Egzersiz Adı", "sets": 3, "reps": "8-12", "rir": "1-2" }}
-      ]
-    }},
-    {{
-      "day": "Gün 2", 
-      "exercises": [
-        {{ "name": "Başka Egzersiz", "sets": 4, "reps": "6-10", "rir": "2-3" }}
-      ]
-    }}
+  "program": {
+        "Monday": [
+            { "exercise": "Squats", "sets": "3x8-10", "rpe": "7-8" },
+            { "exercise": "Bench Press", "sets": "4x6-8", "rpe": "7-8" },
+            { "exercise": "Bicep Curls", "sets": "3x10-12", "rpe": "6-7" }
+        ],
+        "Wednesday": [
+            { "exercise": "Squats", "sets": "3x5", "rpe": "8-9" },
+            { "exercise": "Push-ups", "sets": "3x8-12", "rpe": "7-8" },
+            { "exercise": "Hammer Curls", "sets": "3x10", "rpe": "6-7" }
+        ],
+        "Friday": [
+            { "exercise": "Bench Press", "sets": "3x8", "rpe": "7-8" },
+            { "exercise": "Squats", "sets": "3x10", "rpe": "6-7" },
+            { "exercise": "Treadmill Running", "sets": "20 min", "rpe": "6-7" }
+        ]
     // {user_info['workout_days']} güne kadar devam et
-  ]
+  }
 }}
 
 KURALLAR:
