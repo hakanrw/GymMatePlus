@@ -95,7 +95,6 @@ def get_exercises_logic_data():
         return None
 
 def generate_workout_program(user_info):
-
     try:
         print(f"[DEBUG] {user_info['experience']} seviyesi için program oluşturuluyor...")
 
@@ -133,27 +132,26 @@ Program yapısı {user_info['workout_days']} gün için:
 - 5 gün: Push/Pull/Legs + Upper/Lower
 - 6 gün: Push/Pull/Legs/Push/Pull/Legs
 
-Yalnızca aşağıdaki JSON formatına sadık kalarak çıktı üret:
+Yalnızca aşağıdaki JSON formatına sadık kalarak çıktı üret. Kesinlikle sadece JSON döndür, başka hiçbir metin ekleme:
 
 {{
-  "program": {
-        "Monday": [
-            { "exercise": "Squats", "sets": "3x8-10", "rpe": "7-8" },
-            { "exercise": "Bench Press", "sets": "4x6-8", "rpe": "7-8" },
-            { "exercise": "Bicep Curls", "sets": "3x10-12", "rpe": "6-7" }
-        ],
-        "Wednesday": [
-            { "exercise": "Squats", "sets": "3x5", "rpe": "8-9" },
-            { "exercise": "Push-ups", "sets": "3x8-12", "rpe": "7-8" },
-            { "exercise": "Hammer Curls", "sets": "3x10", "rpe": "6-7" }
-        ],
-        "Friday": [
-            { "exercise": "Bench Press", "sets": "3x8", "rpe": "7-8" },
-            { "exercise": "Squats", "sets": "3x10", "rpe": "6-7" },
-            { "exercise": "Treadmill Running", "sets": "20 min", "rpe": "6-7" }
-        ]
-    // {user_info['workout_days']} güne kadar devam et
-  }
+  "program": {{
+    "Monday": [
+      {{"exercise": "Squats", "sets": "3x8-10", "rpe": "7-8"}},
+      {{"exercise": "Bench Press", "sets": "4x6-8", "rpe": "7-8"}},
+      {{"exercise": "Bicep Curls", "sets": "3x10-12", "rpe": "6-7"}}
+    ],
+    "Wednesday": [
+      {{"exercise": "Squats", "sets": "3x5", "rpe": "8-9"}},
+      {{"exercise": "Push-ups", "sets": "3x8-12", "rpe": "7-8"}},
+      {{"exercise": "Hammer Curls", "sets": "3x10", "rpe": "6-7"}}
+    ],
+    "Friday": [
+      {{"exercise": "Bench Press", "sets": "3x8", "rpe": "7-8"}},
+      {{"exercise": "Squats", "sets": "3x10", "rpe": "6-7"}},
+      {{"exercise": "Treadmill Running", "sets": "20 min", "rpe": "6-7"}}
+    ]
+  }}
 }}
 
 KURALLAR:
@@ -163,6 +161,7 @@ KURALLAR:
 4. {user_info['gender']} cinsiyetine uygun program yapısı
 5. Kesinlikle sadece JSON döndür, açıklama ekleme
 6. Program array'inde {user_info['workout_days']} adet gün objesi olmalı
+7. Her egzersiz için exercise, sets ve rpe alanları olmalı
 
 İşte seviye bazlı JSON verisi:
 {level_specific_json}
@@ -174,8 +173,26 @@ KURALLAR:
         result = llm.invoke([HumanMessage(content=prompt_text)])
 
         print(f"[DEBUG] LLM yanıt verdi.")
+        print(f"[DEBUG] Gemini'den dönen program: {result.content}")
 
-        return result.content
+        # Try to parse the response as JSON
+        try:
+            program_json = json.loads(result.content)
+            return json.dumps(program_json)
+        except json.JSONDecodeError as e:
+            print(f"[DEBUG] JSON parse hatası: {e}")
+            # If JSON parsing fails, try to extract JSON from the response
+            import re
+            json_match = re.search(r'\{.*\}', result.content, re.DOTALL)
+            if json_match:
+                try:
+                    program_json = json.loads(json_match.group())
+                    return json.dumps(program_json)
+                except json.JSONDecodeError:
+                    print(f"[DEBUG] JSON extraction failed")
+                    return "Program oluşturulurken bir hata oluştu: JSON formatı geçersiz"
+            else:
+                return "Program oluşturulurken bir hata oluştu: JSON formatı bulunamadı"
 
     except Exception as e:
         print(f"Program oluşturulurken hata oluştu: {e}")

@@ -1,6 +1,7 @@
 import programService from './programService';
 import { collection, query, where, getDocs } from '@firebase/firestore';
 import { firestore } from '../app/firebaseConfig';
+import { doc, setDoc } from '@firebase/firestore';
 
 interface UserInfo {
     gender?: string;
@@ -20,6 +21,16 @@ interface Exercise {
     equipment: string;
     difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
     imageUrl?: string;
+}
+
+interface WorkoutDay {
+  exercise: string;
+  sets: string;
+  rpe: string;
+}
+
+interface WorkoutProgram {
+  [key: string]: WorkoutDay[];
 }
 
 class AIService {
@@ -305,16 +316,88 @@ Bu bir saniye sürecek!`;
             this.userInfo.experience = this.normalizeExperience(this.userInfo.experience || '');
             console.log('[DEBUG] Normalize edilmiş deneyim:', this.userInfo.experience);
             
-            const program = await programService.generateProgramWithGemini(this.userInfo);
-            console.log('[DEBUG] Gemini\'den program alındı, gün sayısı:', program.length);
+            // Call the LLM API to generate the program
+            const response = await fetch('http://localhost:8000/generate-program', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(this.userInfo),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate program');
+            }
+
+            const responseText = await response.text();
+            console.log('[DEBUG] Raw response:', responseText);
+
+            // Try to parse the response as JSON
+            let program: WorkoutProgram;
+            try {
+                // First try to parse the response directly
+                const data = JSON.parse(responseText);
+                if (!data.program) {
+                    throw new Error('Invalid program format: missing program field');
+                }
+                if (Array.isArray(data.program) && data.program.length === 0) {
+                    throw new Error('Program oluşturulamadı: LLM boş program döndürdü');
+                }
+                program = data.program;
+            } catch (e) {
+                console.error('[DEBUG] JSON parse hatası:', e);
+                // If that fails, try to extract JSON from the response
+                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error('Invalid program format received from LLM');
+                }
+                const data = JSON.parse(jsonMatch[0]);
+                if (!data.program) {
+                    throw new Error('Invalid program format: missing program field');
+                }
+                if (Array.isArray(data.program) && data.program.length === 0) {
+                    throw new Error('Program oluşturulamadı: LLM boş program döndürdü');
+                }
+                program = data.program;
+            }
+
+            console.log('[DEBUG] Parsed program:', program);
             
-            if (program.length === 0) {
-                throw new Error('Program oluşturulamadı');
+            if (!program || Object.keys(program).length === 0) {
+                throw new Error('Program oluşturulamadı: Boş program');
+            }
+
+            // Validate program structure
+            const days = Object.keys(program);
+            if (days.length === 0) {
+                throw new Error('Program oluşturulamadı: Gün bulunamadı');
+            }
+
+            for (const day of days) {
+                if (!Array.isArray(program[day])) {
+                    throw new Error(`Program oluşturulamadı: ${day} günü için geçersiz format`);
+                }
+                if (program[day].length === 0) {
+                    throw new Error(`Program oluşturulamadı: ${day} günü için egzersiz bulunamadı`);
+                }
+                for (const exercise of program[day]) {
+                    if (!exercise.exercise || !exercise.sets || !exercise.rpe) {
+                        throw new Error(`Program oluşturulamadı: ${day} gününde eksik egzersiz bilgisi`);
+                    }
+                }
             }
             
             console.log('[DEBUG] Firebase\'e kaydetme başlıyor...');
-            const programId = await programService.saveWorkoutProgram(this.userInfo, program);
-            console.log('[DEBUG] ✅ Program başarıyla kaydedildi! ID:', programId);
+            
+            // Save program as a field in the user document
+            const userDoc = doc(firestore, 'users', 'current_user_id'); // Replace with actual user ID
+            await setDoc(userDoc, { 
+                program,
+                userInfo: this.userInfo,
+                createdAt: new Date().toISOString()
+            }, { merge: true });
+            
+            console.log('[DEBUG] ✅ Program başarıyla kaydedildi!');
             
             // Deneyim seviyesini sakla (resetUserInfo çağrısından önce)
             const experienceLevel = this.userInfo.experience;
@@ -325,8 +408,8 @@ Bu bir saniye sürecek!`;
             return `🎉 **Harika! Kişisel antrenman programınız hazır!**
 
 📋 **Program Detayları:**
-• ${program.length} günlük antrenman programı
-• Toplam ${program.reduce((total, day) => total + day.exercises.length, 0)} egzersiz
+• ${Object.keys(program).length} günlük antrenman programı
+• Toplam ${Object.values(program).reduce((total, day) => total + day.length, 0)} egzersiz
 • Deneyim seviyeniz: ${experienceLevel}
 
 ✅ **Program Firebase'e kaydedildi!**
