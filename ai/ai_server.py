@@ -67,12 +67,26 @@ def create_workout_program():
                 print(f"[DEBUG] Gemini'den dönen program:")
                 print(f"[DEBUG] {program_result}")
                 
-                # Format the response for the mobile app
-                formatted_program = format_program_for_app(program_result, workout_days)
+                # Parse the program result
+                program_data = json.loads(program_result)
                 
+                # Check if there's an error in the response
+                if 'error' in program_data:
+                    return jsonify({
+                        'success': False,
+                        'error': program_data['error'],
+                        'user_info': {
+                            'gender': gender,
+                            'experience': experience,
+                            'goal': goal,
+                            'workout_days': workout_days
+                        }
+                    })
+                
+                # Return the program directly
                 return jsonify({
                     'success': True,
-                    'program': formatted_program,
+                    'program': program_data['program'],
                     'user_info': {
                         'gender': gender,
                         'experience': experience,

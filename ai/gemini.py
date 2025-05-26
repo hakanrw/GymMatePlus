@@ -160,7 +160,7 @@ KURALLAR:
 3. {user_info['experience']} seviyesine uygun zorluk
 4. {user_info['gender']} cinsiyetine uygun program yapısı
 5. Kesinlikle sadece JSON döndür, açıklama ekleme
-6. Program array'inde {user_info['workout_days']} adet gün objesi olmalı
+6. Program objesinde {user_info['workout_days']} adet gün olmalı
 7. Her egzersiz için exercise, sets ve rpe alanları olmalı
 
 İşte seviye bazlı JSON verisi:
@@ -178,6 +178,8 @@ KURALLAR:
         # Try to parse the response as JSON
         try:
             program_json = json.loads(result.content)
+            if not program_json.get('program'):
+                raise ValueError("Program field is missing in LLM response")
             return json.dumps(program_json)
         except json.JSONDecodeError as e:
             print(f"[DEBUG] JSON parse hatası: {e}")
@@ -187,18 +189,29 @@ KURALLAR:
             if json_match:
                 try:
                     program_json = json.loads(json_match.group())
+                    if not program_json.get('program'):
+                        raise ValueError("Program field is missing in extracted JSON")
                     return json.dumps(program_json)
                 except json.JSONDecodeError:
                     print(f"[DEBUG] JSON extraction failed")
-                    return "Program oluşturulurken bir hata oluştu: JSON formatı geçersiz"
+                    return json.dumps({
+                        "program": {},
+                        "error": "Program oluşturulurken bir hata oluştu: JSON formatı geçersiz"
+                    })
             else:
-                return "Program oluşturulurken bir hata oluştu: JSON formatı bulunamadı"
+                return json.dumps({
+                    "program": {},
+                    "error": "Program oluşturulurken bir hata oluştu: JSON formatı bulunamadı"
+                })
 
     except Exception as e:
         print(f"Program oluşturulurken hata oluştu: {e}")
         import traceback
         traceback.print_exc()
-        return f"Program oluşturulurken bir hata oluştu: {str(e)}"
+        return json.dumps({
+            "program": {},
+            "error": f"Program oluşturulurken bir hata oluştu: {str(e)}"
+        })
 
 def process_exercise_feedback(exercise_name, volume, intensity, weight, feedback_data, user_experience, progression, exercises):
 

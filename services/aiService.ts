@@ -2,6 +2,7 @@ import programService from './programService';
 import { collection, query, where, getDocs } from '@firebase/firestore';
 import { firestore } from '../app/firebaseConfig';
 import { doc, setDoc } from '@firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 interface UserInfo {
     gender?: string;
@@ -337,32 +338,25 @@ Bu bir saniye sürecek!`;
             try {
                 // First try to parse the response directly
                 const data = JSON.parse(responseText);
-                if (!data.program) {
-                    throw new Error('Invalid program format: missing program field');
+                console.log('[DEBUG] Parsed response data:', data);
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Program oluşturulamadı');
                 }
-                if (Array.isArray(data.program) && data.program.length === 0) {
-                    throw new Error('Program oluşturulamadı: LLM boş program döndürdü');
+
+                if (!data.program || typeof data.program !== 'object') {
+                    throw new Error('Invalid program format: program must be an object');
                 }
+
+                // The program is already in the correct format
                 program = data.program;
+
+                console.log('[DEBUG] Program:', program);
             } catch (e) {
                 console.error('[DEBUG] JSON parse hatası:', e);
-                // If that fails, try to extract JSON from the response
-                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
-                    throw new Error('Invalid program format received from LLM');
-                }
-                const data = JSON.parse(jsonMatch[0]);
-                if (!data.program) {
-                    throw new Error('Invalid program format: missing program field');
-                }
-                if (Array.isArray(data.program) && data.program.length === 0) {
-                    throw new Error('Program oluşturulamadı: LLM boş program döndürdü');
-                }
-                program = data.program;
+                throw new Error('Program oluşturulamadı: Geçersiz program formatı');
             }
 
-            console.log('[DEBUG] Parsed program:', program);
-            
             if (!program || Object.keys(program).length === 0) {
                 throw new Error('Program oluşturulamadı: Boş program');
             }
@@ -390,7 +384,7 @@ Bu bir saniye sürecek!`;
             console.log('[DEBUG] Firebase\'e kaydetme başlıyor...');
             
             // Save program as a field in the user document
-            const userDoc = doc(firestore, 'users', 'current_user_id'); // Replace with actual user ID
+            const userDoc = doc(firestore, 'users',getAuth().currentUser?.uid); // Replace with actual user ID
             await setDoc(userDoc, { 
                 program,
                 userInfo: this.userInfo,
