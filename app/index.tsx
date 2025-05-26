@@ -157,6 +157,8 @@ function AppStack() {
                     headerShown: false,
                     presentation: 'modal'
                 }}
+            />
+            <Stack.Screen
                 name="EntryHistory"
                 component={EntryHistory}
                 options={{ headerShown: false }}

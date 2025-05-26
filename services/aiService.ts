@@ -260,7 +260,7 @@ class AIService {
         if (/erkek/.test(message_lower)) this.userInfo.gender = 'Erkek';
         if (/kad[ıi]n/.test(message_lower)) this.userInfo.gender = 'Kadın';
         // Deneyim seviyesi
-        if (/başlang[ıi]ç/.test(message_lower)) this.userInfo.experience = 'başlangıç';
+        if (/ba[sş]lang[ıi]ç/.test(message_lower)) this.userInfo.experience = 'başlangıç';
         else if (/orta/.test(message_lower)) this.userInfo.experience = 'orta seviye';
         else if (/ileri/.test(message_lower)) this.userInfo.experience = 'ileri seviye';
         // Hedef

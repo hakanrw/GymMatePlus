@@ -1,3 +1,4 @@
+import { applicationDefault, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 const gyms = [
@@ -34,4 +35,13 @@ export async function seedGyms() {
   });
   await batch.commit();
   console.log("🏋️ Seeded gyms into Firestore.");
+}
+
+if (require.main === module) {
+  initializeApp({
+      projectId: 'plus-gymmate', // 👈 required here
+      credential: applicationDefault(), // uses GOOGLE_APPLICATION_CREDENTIALS if set, or emulator in dev
+  });
+
+  seedGyms();
 }

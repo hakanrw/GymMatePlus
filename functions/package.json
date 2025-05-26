@@ -8,7 +8,8 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "seed": "npm run build && FIRESTORE_EMULATOR_HOST=127.0.0.1:9299 node lib/seed/seed.js"
   },
   "engines": {
     "node": "22"
