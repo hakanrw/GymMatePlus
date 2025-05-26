@@ -145,12 +145,12 @@ const Home = () => {
     const areaValues = [
         ['Chest', require('../../../assets/images/area/Chest.png')], 
         ['Biceps', require('../../../assets/images/area/Biceps.png')], 
-        ['Core', require('../../../assets/images/area/Glutes.png')], 
+        ['Core', require('../../../assets/images/area/Core.jpg')], 
         ['Glutes', require('../../../assets/images/area/Glutes.png')], 
-        ['Legs', require('../../../assets/images/area/Glutes.png')], 
-        ['Triceps', require('../../../assets/images/area/Glutes.png')], 
-        ['Back', require('../../../assets/images/area/Glutes.png')], 
-        ['Shoulders', require('../../../assets/images/area/Glutes.png')], 
+        ['Legs', require('../../../assets/images/area/Legs.webp')], 
+        ['Triceps', require('../../../assets/images/area/Triceps.webp')], 
+        ['Back', require('../../../assets/images/area/Back.jpg')], 
+        ['Shoulders', require('../../../assets/images/area/Shoulders.webp')], 
         ['Cardio', require('../../../assets/images/area/Cardio.png')]
     ];
 
