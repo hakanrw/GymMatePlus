@@ -42,6 +42,7 @@ export type HomeStackParamList = {
     AreaExercises: {
         area: string;
     };
+    Exercises: undefined;
 };
 
 export type CalendarStackParamList = {

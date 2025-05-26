@@ -42,6 +42,7 @@ import AreaExercises from './Screens/Main/AreaExercises';
 import EntryHistory from './Screens/Main/EntryHistory';
 import Settings from './Screens/Main/Settings';
 import TraineeEntries from './Screens/Main/TraineeEntries';
+import Exercises from './Screens/Main/Exercises';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -103,6 +104,11 @@ function HomeStack() {
             <Stack.Screen
                 name="AreaExercises"
                 component={AreaExercises}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="Exercises"
+                component={Exercises}
                 options={{ headerShown: false }}
             />
         </Stack.Navigator>

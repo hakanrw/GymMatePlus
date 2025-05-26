@@ -214,11 +214,16 @@ const Home = () => {
                     )}
                 </ScrollView>
 
-                <Text style={[styles.title, {marginTop: 10}]}>
-                    Featured Exercises
-                    <View style={{width: 10}}></View>
-                    <FontAwesome name='chevron-right' size={16}/>
-                </Text>
+                <TouchableOpacity 
+                    onPress={() => navigation.navigate('Exercises')}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[styles.title, {marginTop: 10}]}>
+                        Featured Exercises
+                        <View style={{width: 10}}></View>
+                        <FontAwesome name='chevron-right' size={16}/>
+                    </Text>
+                </TouchableOpacity>
                 <ScrollView style={styles.scroll} horizontal>
                     {featuredExercises.map(exercise =>    
                         <TouchableOpacity 
