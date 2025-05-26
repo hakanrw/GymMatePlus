@@ -1,67 +1,97 @@
 import os
 import json
 from langchain_google_genai import ChatGoogleGenerativeAI
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# Firebase initialization
+cred = credentials.Certificate("../firebase_import/auth_export/serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 os.environ["GOOGLE_API_KEY"] = "AIzaSyDA_daznjF8sIwy6p63qic-ZYlSRZ2Nas4"
 
 def get_level_specific_data(experience_level):
-    level_mapping = {
-        "başlangıç": "beginner-level.json",
-        "orta seviye": "intermediate-level.json",
-        "ileri seviye": "advanced-level.json",
-        "beginner": "beginner-level.json",
-        "intermediate": "intermediate-level.json",
-        "advanced": "advanced-level.json",
-    }
-
-    file_name = level_mapping.get(experience_level.lower())
-    if not file_name:
-        print(f"Uyarı: Geçersiz deneyim seviyesi: {experience_level}. Varsayılan olarak beginner-level.json kullanılıyor.")
-        file_name = "beginner-level.json"
-
-    # Get the directory where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(script_dir, file_name)
-
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        print(f"HATA: JSON dosyası '{file_path}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
-        return None
+        # Map experience levels to Firebase difficulty levels
+        level_mapping = {
+            "başlangıç": "Beginner",
+            "orta seviye": "Intermediate",
+            "ileri seviye": "Advanced",
+            "beginner": "Beginner",
+            "intermediate": "Intermediate",
+            "advanced": "Advanced",
+        }
+
+        difficulty = level_mapping.get(experience_level.lower(), "Beginner")
+        print(f"[DEBUG] Fetching exercises for difficulty level: {difficulty}")
+
+        # Query Firestore for exercises with the specified difficulty
+        exercises_ref = db.collection('exercises')
+        query = exercises_ref.where('difficulty', '==', difficulty)
+        exercises = query.get()
+
+        if not exercises:
+            print(f"[DEBUG] No exercises found for difficulty level: {difficulty}")
+            return None
+
+        # Convert Firestore documents to a list of dictionaries
+        exercises_list = []
+        for doc in exercises:
+            exercise_data = doc.to_dict()
+            exercises_list.append(exercise_data)
+
+        print(f"[DEBUG] Successfully fetched {len(exercises_list)} exercises")
+        return exercises_list
+
     except Exception as e:
-        print(f"JSON dosyası '{file_path}' yüklenemedi: {e}")
+        print(f"[ERROR] Failed to fetch exercises from Firebase: {e}")
         return None
-    
+
 def get_progression_data():
-    progression = "progress-logic.json"
-    # Get the directory where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(script_dir, progression)
-    
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        print(f"HATA: JSON dosyası '{file_path}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
-        return None
+        # Query Firestore for progression data
+        progression_ref = db.collection('progression')
+        progression_docs = progression_ref.get()
+
+        if not progression_docs:
+            print("[DEBUG] No progression data found")
+            return None
+
+        # Convert Firestore documents to a list of dictionaries
+        progression_list = []
+        for doc in progression_docs:
+            progression_data = doc.to_dict()
+            progression_list.append(progression_data)
+
+        print(f"[DEBUG] Successfully fetched progression data")
+        return progression_list
+
     except Exception as e:
-        print(f"JSON dosyası '{file_path}' yüklenemedi: {e}")
+        print(f"[ERROR] Failed to fetch progression data from Firebase: {e}")
         return None
+
 def get_exercises_logic_data():
-    progression = "exercise-logic.json"
-    # Get the directory where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(script_dir, progression)
-    
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        print(f"HATA: JSON dosyası '{file_path}' bulunamadı. Lütfen dosya yolunu kontrol edin.")
-        return None
+        # Query Firestore for exercise logic data
+        exercises_ref = db.collection('exercises')
+        exercises = exercises_ref.get()
+
+        if not exercises:
+            print("[DEBUG] No exercise logic data found")
+            return None
+
+        # Convert Firestore documents to a list of dictionaries
+        exercises_list = []
+        for doc in exercises:
+            exercise_data = doc.to_dict()
+            exercises_list.append(exercise_data)
+
+        print(f"[DEBUG] Successfully fetched exercise logic data")
+        return exercises_list
+
     except Exception as e:
-        print(f"JSON dosyası '{file_path}' yüklenemedi: {e}")
+        print(f"[ERROR] Failed to fetch exercise logic data from Firebase: {e}")
         return None
 
 def generate_workout_program(user_info):

@@ -1,4 +1,6 @@
 import programService from './programService';
+import { collection, query, where, getDocs } from '@firebase/firestore';
+import { firestore } from '../app/firebaseConfig';
 
 interface UserInfo {
     gender?: string;
@@ -6,6 +8,18 @@ interface UserInfo {
     goal?: string;
     workout_days?: string;
     focus_area?: string;
+}
+
+interface Exercise {
+    id: string;
+    name: string;
+    area: string;
+    description: string;
+    instructions: string[];
+    targetMuscles: string[];
+    equipment: string;
+    difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+    imageUrl?: string;
 }
 
 class AIService {
@@ -27,15 +41,15 @@ class AIService {
         
         // Exercise technique questions
         if (message.includes('bench press') || message.includes('göğüs')) {
-            return this.handleExerciseQuestion('bench_press');
+            return await this.handleExerciseQuestion('Bench Press');
         }
         
         if (message.includes('squat') || message.includes('çömelme')) {
-            return this.handleExerciseQuestion('squat');
+            return await this.handleExerciseQuestion('Squat');
         }
         
         if (message.includes('deadlift') || message.includes('ölü kaldırış')) {
-            return this.handleExerciseQuestion('deadlift');
+            return await this.handleExerciseQuestion('Deadlift');
         }
         
         // Nutrition questions
@@ -76,63 +90,38 @@ class AIService {
         return result;
     }
     
-    private handleExerciseQuestion(exercise: string): string {
-        const exercises: Record<string, string> = {
-            bench_press: `🏋️‍♀️ **Bench Press Tekniği:**
+    private async handleExerciseQuestion(exerciseName: string): Promise<string> {
+        try {
+            const exercisesRef = collection(firestore, 'exercises');
+            const q = query(exercisesRef, where('name', '==', exerciseName));
+            const querySnapshot = await getDocs(q);
+            
+            if (querySnapshot.empty) {
+                return "Bu egzersiz hakkında daha spesifik bir soru sorabilir misiniz?";
+            }
 
-**Başlangıç Pozisyonu:**
-• Sırtınızı düz tutarak banka uzanın
-• Omuz genişliğinden biraz geniş tutuş
-• Ayaklarınızı yere sıkıca bastırın
+            const exercise = querySnapshot.docs[0].data() as Exercise;
+            
+            return `🏋️‍♀️ **${exercise.name} Tekniği:**
 
-**Hareket:**
-• Barı kontrollü şekilde göğsünüze indirin
-• Güçlü bir şekilde yukarı itin
-• Nefes verirken itin, çekerken alın
+**Açıklama:**
+${exercise.description}
 
-**Yaygın Hatalar:**
-• Sırtı aşırı kavisli tutmak
-• Barı çok hızlı indirmek
-• Tam hareket genliği kullanmamak`,
+**Hedef Kaslar:**
+${exercise.targetMuscles.map(muscle => `• ${muscle}`).join('\n')}
 
-            squat: `🏋️‍♂️ **Squat Tekniği:**
+**Ekipman:**
+• ${exercise.equipment}
 
-**Başlangıç Pozisyonu:**
-• Ayakları omuz genişliğinde açın
-• Parmak uçları hafif dışa dönük
-• Sırt düz, göğüs açık
+**Zorluk Seviyesi:**
+• ${exercise.difficulty}
 
-**Hareket:**
-• Kalçanızı geriye doğru itin
-• Dizlerinizi ayak parmaklarınız hizasında bükün
-• Uyluk kası yere paralel olana kadar inin
-• Topukları yere basarak kalkın
-
-**İpuçları:**
-• Dizler içe kaçmasın
-• Ağırlık topuklarda olsun
-• Nefes alarak inin, vererek kalkın`,
-
-            deadlift: `💪 **Deadlift Tekniği:**
-
-**Başlangıç Pozisyonu:**
-• Ayakları kalça genişliğinde
-• Bar ayak orta kısmında
-• Omuzlar barın hafif önünde
-
-**Hareket:**
-• Kalça ve dizleri aynı anda bükerek inin
-• Sırtı düz tutun
-• Barı vücuda yakın tutarak kaldırın
-• Kalça ve dizleri aynı anda açın
-
-**Güvenlik:**
-• Sırt hiçbir zaman yuvarlak olmasın
-• Ağır ağırlıklarda kemeri kullanın
-• Hareket hızını kontrol edin`
-        };
-        
-        return exercises[exercise] || "Bu egzersiz hakkında daha spesifik bir soru sorabilir misiniz?";
+**Adımlar:**
+${exercise.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
+        } catch (error) {
+            console.error('Error fetching exercise:', error);
+            return "Üzgünüm, egzersiz bilgilerini getirirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.";
+        }
     }
     
     private handleNutritionQuestion(message: string): string {
