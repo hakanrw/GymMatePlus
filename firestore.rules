@@ -37,6 +37,12 @@ service cloud.firestore {
                     (isTraineeOfCoach(userId) && isOnlyUpdatingProgram()) ||
                     request.auth != null; // Allow Firebase Functions to update user data (coach assignment)
 
+      // Programs subcollection - users can manage their own programs
+      match /programs/{programId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isAuthenticated() && request.auth.uid == userId;
+      }
+
       function isOnlyUpdatingProgram() {
         let newData = request.resource.data;
         let oldData = resource.data;

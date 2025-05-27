@@ -42,20 +42,25 @@ const Home = () => {
     const searchContainerRef = useRef<View>(null);
 
     useEffect(() => {
-        const handleClickOutside = (event: any) => {
-            // For web platform
-            if (Platform.OS === 'web') {
+        const handleClickOutside = () => {
+            // For mobile, we'll handle this differently through touch events
+            if (Platform.OS !== 'web') {
+                setShowResults(false);
+            }
+        };
+
+        // Only add document listeners on web platform
+        if (Platform.OS === 'web' && typeof document !== 'undefined') {
+            const handleWebClickOutside = (event: any) => {
                 const target = event.target as HTMLElement;
                 if (searchContainerRef.current && !target.closest('[data-search-container]')) {
                     setShowResults(false);
                 }
-            }
-        };
-
-        if (Platform.OS === 'web') {
-            document.addEventListener('click', handleClickOutside);
+            };
+            
+            document.addEventListener('click', handleWebClickOutside);
             return () => {
-                document.removeEventListener('click', handleClickOutside);
+                document.removeEventListener('click', handleWebClickOutside);
             };
         }
     }, []);
@@ -140,7 +145,12 @@ const Home = () => {
     const areaValues = [
         ['Chest', require('../../../assets/images/area/Chest.png')], 
         ['Biceps', require('../../../assets/images/area/Biceps.png')], 
+        ['Core', require('../../../assets/images/area/Core.jpg')], 
         ['Glutes', require('../../../assets/images/area/Glutes.png')], 
+        ['Legs', require('../../../assets/images/area/Legs.webp')], 
+        ['Triceps', require('../../../assets/images/area/Triceps.webp')], 
+        ['Back', require('../../../assets/images/area/Back.jpg')], 
+        ['Shoulders', require('../../../assets/images/area/Shoulders.webp')], 
         ['Cardio', require('../../../assets/images/area/Cardio.png')]
     ];
 
@@ -204,11 +214,16 @@ const Home = () => {
                     )}
                 </ScrollView>
 
-                <Text style={[styles.title, {marginTop: 10}]}>
-                    Featured Exercises
-                    <View style={{width: 10}}></View>
-                    <FontAwesome name='chevron-right' size={16}/>
-                </Text>
+                <TouchableOpacity 
+                    onPress={() => navigation.navigate('Exercises')}
+                    activeOpacity={0.7}
+                >
+                    <Text style={[styles.title, {marginTop: 10}]}>
+                        Featured Exercises
+                        <View style={{width: 10}}></View>
+                        <FontAwesome name='chevron-right' size={16}/>
+                    </Text>
+                </TouchableOpacity>
                 <ScrollView style={styles.scroll} horizontal>
                     {featuredExercises.map(exercise =>    
                         <TouchableOpacity 

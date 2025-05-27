@@ -36,11 +36,13 @@ import PaymentSuccess from './Screens/GymSelection/PaymentSuccess';
 import UserSelection from './Screens/Main/UserSelection';
 import CoachCalendar from './Screens/Main/CoachCalendar';
 import ProgramEditor from './Screens/Main/ProgramEditor';
+import AIChat from './Screens/Main/AIChat';
 import ExerciseDetail from './Screens/Main/ExerciseDetail';
 import AreaExercises from './Screens/Main/AreaExercises';
 import EntryHistory from './Screens/Main/EntryHistory';
 import Settings from './Screens/Main/Settings';
 import TraineeEntries from './Screens/Main/TraineeEntries';
+import Exercises from './Screens/Main/Exercises';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
@@ -104,6 +106,11 @@ function HomeStack() {
                 component={AreaExercises}
                 options={{ headerShown: false }}
             />
+            <Stack.Screen
+                name="Exercises"
+                component={Exercises}
+                options={{ headerShown: false }}
+            />
         </Stack.Navigator>
     );
 }
@@ -144,6 +151,14 @@ function AppStack() {
             <Stack.Screen
                 name="ProgramEditor"
                 component={ProgramEditor}
+                options={{ 
+                    headerShown: false,
+                    presentation: 'modal'
+                }}
+            />
+            <Stack.Screen
+                name="AIChat"
+                component={AIChat}
                 options={{ 
                     headerShown: false,
                     presentation: 'modal'

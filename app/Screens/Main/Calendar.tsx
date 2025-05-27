@@ -18,7 +18,7 @@ import type { RootStackParamList, CalendarStackParamList } from '@/app/types/nav
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
 import { Dumbell } from '@/components/Dumbell';
-import { doc, getDoc, collection, query, where, getDocs } from '@firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs } from '@firebase/firestore';
 import { firestore, auth } from '../../firebaseConfig';
 import CoachCalendar from './CoachCalendar';
 import { FontAwesome } from '@expo/vector-icons';
@@ -26,9 +26,10 @@ import { FontAwesome } from '@expo/vector-icons';
 type NavigationProp = NativeStackNavigationProp<CalendarStackParamList>;
 
 interface Exercise {
-    exercise: string;
-    sets: string;
-    rpe: string;
+    name: string;
+    sets: number;
+    reps: string;
+    rir: string;
 }
 
 interface FirebaseExercise {
@@ -149,6 +150,7 @@ const Calendar = () => {
             await fetchExerciseDetails(userProgram);
         } catch (error) {
             console.error('Error loading program:', error);
+            setProgram(defaultProgram);
         } finally {
             setLoading(false);
         }

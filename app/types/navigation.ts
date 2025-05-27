@@ -27,6 +27,7 @@ export type RootStackParamList = {
             }[];
         };
     };
+    AIChat: undefined;
     EntryHistory: undefined;
     Settings: undefined;
     TraineeEntries: undefined;
@@ -41,6 +42,7 @@ export type HomeStackParamList = {
     AreaExercises: {
         area: string;
     };
+    Exercises: undefined;
 };
 
 export type CalendarStackParamList = {

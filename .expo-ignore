@@ -1,0 +1,8 @@
+app/ai/
+app/ai/**/*
+**/ai_env/
+**/ai_env/**/*
+**/debugger.js
+**/debug/
+**/*.py
+**/__pycache__/ 
