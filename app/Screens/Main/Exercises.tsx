@@ -121,6 +121,10 @@ const Exercises = () => {
                 </View>
 
                 <Text style={styles.title}>All Exercises</Text>
+                <Text style={styles.exerciseCount}>
+                    {exercises.length} exercise{exercises.length !== 1 ? 's' : ''} available
+                </Text>
+                
                 <View style={styles.exercisesList}>
                     {exercises.map((exercise) => (
                         <TouchableOpacity 
@@ -129,19 +133,30 @@ const Exercises = () => {
                             onPress={() => handleExercisePress(exercise.id)}
                             activeOpacity={0.7}
                         >
-                            {exercise.imageUrl ? (
-                                <Image 
-                                    source={{ uri: exercise.imageUrl }} 
-                                    style={styles.exerciseImage}
-                                />
-                            ) : (
-                                <View style={styles.placeholderImage}>
-                                    <FontAwesome name="image" size={32} color="#ccc" />
-                                </View>
-                            )}
+                            {/* Exercise Image */}
+                            <View style={styles.imageContainer}>
+                                {exercise.imageUrl ? (
+                                    <Image 
+                                        source={{ uri: exercise.imageUrl }} 
+                                        style={styles.exerciseImage}
+                                        resizeMode="cover"
+                                    />
+                                ) : (
+                                    <View style={styles.placeholderImage}>
+                                        <FontAwesome name="image" size={32} color="#ccc" />
+                                    </View>
+                                )}
+                            </View>
+
+                            {/* Exercise Info */}
                             <View style={styles.exerciseInfo}>
                                 <Text style={styles.exerciseName}>{exercise.name}</Text>
                                 <Text style={styles.exerciseArea}>{exercise.area}</Text>
+                                <Text style={styles.exerciseDescription} numberOfLines={2}>
+                                    {exercise.description}
+                                </Text>
+                                
+                                {/* Exercise Details */}
                                 <View style={styles.exerciseDetails}>
                                     <View style={styles.detailItem}>
                                         <FontAwesome name="trophy" size={12} color="#666" />
@@ -154,10 +169,30 @@ const Exercises = () => {
                                         <Text style={styles.detailText}>{exercise.equipment}</Text>
                                     </View>
                                 </View>
+
+                                {/* Target Muscles */}
+                                <View style={styles.musclesContainer}>
+                                    {exercise.targetMuscles.slice(0, 3).map((muscle, index) => (
+                                        <View key={index} style={styles.muscleTag}>
+                                            <Text style={styles.muscleText}>{muscle}</Text>
+                                        </View>
+                                    ))}
+                                    {exercise.targetMuscles.length > 3 && (
+                                        <Text style={styles.moreText}>+{exercise.targetMuscles.length - 3} more</Text>
+                                    )}
+                                </View>
+                            </View>
+
+                            {/* Arrow Icon */}
+                            <View style={styles.arrowContainer}>
+                                <FontAwesome name="chevron-right" size={16} color="#ccc" />
                             </View>
                         </TouchableOpacity>
                     ))}
                 </View>
+                
+                {/* Padding */}
+                <View style={{ height: 40 }} />
             </ScrollView>
         </Container>
     );
@@ -187,8 +222,14 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 20,
     },
+    exerciseCount: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 20,
+    },
     exercisesList: {
         flexDirection: 'column',
+        gap: 16,
     },
     exerciseCard: {
         width: '100%',
@@ -205,48 +246,88 @@ const styles = StyleSheet.create({
         elevation: 5,
         overflow: 'hidden',
         flexDirection: 'row',
+        padding: 16,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#f0f0f0',
+    },
+    imageContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 8,
+        overflow: 'hidden',
+        marginRight: 16,
     },
     exerciseImage: {
-        width: 120,
-        height: 120,
-        borderTopLeftRadius: 10,
-        borderBottomLeftRadius: 10,
+        width: '100%',
+        height: '100%',
     },
     placeholderImage: {
-        width: 120,
-        height: 120,
-        backgroundColor: '#f0f0f0',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#f5f5f5',
         justifyContent: 'center',
         alignItems: 'center',
-        borderTopLeftRadius: 10,
-        borderBottomLeftRadius: 10,
     },
     exerciseInfo: {
         flex: 1,
-        padding: 12,
-        justifyContent: 'center',
+        paddingRight: 8,
     },
     exerciseName: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 4,
+        color: '#000',
     },
     exerciseArea: {
         fontSize: 14,
         color: '#666',
+        marginBottom: 4,
+    },
+    exerciseDescription: {
+        fontSize: 14,
+        color: '#666',
+        lineHeight: 20,
         marginBottom: 8,
     },
     exerciseDetails: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        gap: 16,
+        marginBottom: 8,
     },
     detailItem: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 4,
     },
     detailText: {
         fontSize: 12,
-        marginLeft: 4,
+        fontWeight: '500',
+    },
+    musclesContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 4,
+        alignItems: 'center',
+    },
+    muscleTag: {
+        backgroundColor: '#e3f2fd',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 10,
+    },
+    muscleText: {
+        fontSize: 10,
+        color: '#1976d2',
+        fontWeight: '500',
+    },
+    moreText: {
+        fontSize: 10,
+        color: '#999',
+        fontStyle: 'italic',
+    },
+    arrowContainer: {
+        marginLeft: 8,
     },
     loadingContainer: {
         flex: 1,
