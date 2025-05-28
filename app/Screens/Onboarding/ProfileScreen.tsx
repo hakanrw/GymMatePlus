@@ -28,7 +28,24 @@ const ProfileScreen = () => {
     const [weight, setWeight] = useState('');
     const [height, setHeight] = useState('');
     const [showSexDropdown, setShowSexDropdown] = useState(false);
+    const [showDobDropdown, setShowDobDropdown] = useState(false);
+    const [selectedDay, setSelectedDay] = useState('21');
+    const [selectedMonth, setSelectedMonth] = useState('May');
+    const [selectedYear, setSelectedYear] = useState('1999');
     const [status, setStatus] = useState<{status: string, message: string} | null>(null);
+
+    // Generate arrays for date selection
+    const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 80 }, (_, i) => (currentYear - 15 - i).toString());
+
+    const formatDateOfBirth = () => {
+        return `${selectedDay} ${selectedMonth} ${selectedYear}`;
+    };
 
     const toggleGoal = (goal: string) => {
         if (selectedGoals.includes(goal)) {
@@ -46,7 +63,7 @@ const ProfileScreen = () => {
             weight: Number.parseInt(weight),
             height: Number.parseInt(height),
             sex: selectedSex,
-            dateOfBirth: '1997-10-25',
+            dateOfBirth: formatDateOfBirth(),
             fitnessGoals: selectedGoals,
             difficulty
         }).then((value) => {
@@ -185,13 +202,102 @@ const ProfileScreen = () => {
                     </View>
 
                     {/* Birth Date */}
-                    <TouchableOpacity style={styles.row}>
-                        <Text style={styles.label}>DOB</Text>
-                        <View style={styles.rowRight}>
-                            <Text style={styles.value}>21 May 1999</Text>
-                            <FontAwesome name="chevron-down" size={12} color="#aaa" style={{ marginLeft: 6 }} />
-                        </View>
-                    </TouchableOpacity>
+                    <View>
+                        <TouchableOpacity
+                            style={styles.row}
+                            onPress={() => setShowDobDropdown(!showDobDropdown)}
+                        >
+                            <Text style={styles.label}>DOB</Text>
+                            <View style={styles.rowRight}>
+                                <Text style={styles.value}>{formatDateOfBirth()}</Text>
+                                <FontAwesome
+                                    name={showDobDropdown ? "chevron-up" : "chevron-down"}
+                                    size={12}
+                                    color="#aaa"
+                                    style={{ marginLeft: 6 }}
+                                />
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Date of Birth Dropdown */}
+                        {showDobDropdown && (
+                            <View style={styles.dobDropdownContainer}>
+                                {/* Day Selection */}
+                                <View style={styles.dobSection}>
+                                    <Text style={styles.dobSectionTitle}>Day</Text>
+                                    <ScrollView style={styles.dobScrollView} showsVerticalScrollIndicator={false}>
+                                        {days.map(day => (
+                                            <TouchableOpacity
+                                                key={day}
+                                                style={[
+                                                    styles.dobOption,
+                                                    selectedDay === day && styles.dobOptionSelected
+                                                ]}
+                                                onPress={() => setSelectedDay(day)}
+                                            >
+                                                <Text style={styles.dobText}>{day}</Text>
+                                                {selectedDay === day && (
+                                                    <FontAwesome name="check" size={12} color="#000" />
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+
+                                {/* Month Selection */}
+                                <View style={styles.dobSection}>
+                                    <Text style={styles.dobSectionTitle}>Month</Text>
+                                    <ScrollView style={styles.dobScrollView} showsVerticalScrollIndicator={false}>
+                                        {months.map(month => (
+                                            <TouchableOpacity
+                                                key={month}
+                                                style={[
+                                                    styles.dobOption,
+                                                    selectedMonth === month && styles.dobOptionSelected
+                                                ]}
+                                                onPress={() => setSelectedMonth(month)}
+                                            >
+                                                <Text style={styles.dobText}>{month}</Text>
+                                                {selectedMonth === month && (
+                                                    <FontAwesome name="check" size={12} color="#000" />
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+
+                                {/* Year Selection */}
+                                <View style={styles.dobSection}>
+                                    <Text style={styles.dobSectionTitle}>Year</Text>
+                                    <ScrollView style={styles.dobScrollView} showsVerticalScrollIndicator={false}>
+                                        {years.map(year => (
+                                            <TouchableOpacity
+                                                key={year}
+                                                style={[
+                                                    styles.dobOption,
+                                                    selectedYear === year && styles.dobOptionSelected
+                                                ]}
+                                                onPress={() => setSelectedYear(year)}
+                                            >
+                                                <Text style={styles.dobText}>{year}</Text>
+                                                {selectedYear === year && (
+                                                    <FontAwesome name="check" size={12} color="#000" />
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+
+                                {/* Close Button */}
+                                <TouchableOpacity
+                                    style={styles.dobCloseButton}
+                                    onPress={() => setShowDobDropdown(false)}
+                                >
+                                    <Text style={styles.dobCloseText}>Done</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
 
                     {/* Fitness Goals */}
                     <View style={[styles.section, { borderTopWidth: 0, marginTop: 10 }]}>
@@ -399,5 +505,66 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#000',
     },
-
+    dobDropdownContainer: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#eee',
+        borderRadius: 8,
+        marginHorizontal: 10,
+        marginTop: -5,
+        zIndex: 1000,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        flexDirection: 'row',
+        maxHeight: 200,
+    },
+    dobSection: {
+        flex: 1,
+        padding: 12,
+        borderRightWidth: 1,
+        borderRightColor: '#eee',
+    },
+    dobSectionTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+        textAlign: 'center',
+        color: '#666',
+    },
+    dobScrollView: {
+        maxHeight: 120,
+    },
+    dobOption: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f5f5f5',
+    },
+    dobOptionSelected: {
+        backgroundColor: '#f9f9f9',
+    },
+    dobText: {
+        fontSize: 14,
+        color: '#000',
+    },
+    dobCloseButton: {
+        position: 'absolute',
+        bottom: 10,
+        right: 15,
+        backgroundColor: '#000',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 6,
+    },
+    dobCloseText: {
+        fontSize: 14,
+        color: '#fff',
+        fontWeight: '600',
+    },
 });
