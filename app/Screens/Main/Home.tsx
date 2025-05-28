@@ -208,7 +208,7 @@ const Home = () => {
                             onPress={() => handleAreaPress(val[0] as string)}
                             activeOpacity={0.7}
                         >
-                            <Image source={val[1]} style={{height: 100, width: 100, borderRadius: '50%'}}/>
+                            <Image source={val[1]} style={{height: 100, width: 100, borderRadius: 50}}/>
                             <Text>{val[0]}</Text>
                         </TouchableOpacity>
                     )}
