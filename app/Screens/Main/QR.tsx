@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Container } from '@/components/Container';
 import { doc, getDoc, collection, addDoc, query, where, orderBy, limit, getDocs, updateDoc, getFirestore } from '@firebase/firestore';
 import { auth } from '../../firebaseConfig';
+import WorkoutRatingModal from '@/components/WorkoutRatingModal';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 const WINDOW_WIDTH = Dimensions.get('window').width;
@@ -29,6 +30,8 @@ const QR = () => {
     const [torch, setTorch] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [cooldown, setCooldown] = useState(false);
+    const [showRatingModal, setShowRatingModal] = useState(false);
+    const [currentSession, setCurrentSession] = useState<any>(null);
 
     useEffect(() => {
         requestPermission();
@@ -166,10 +169,8 @@ const QR = () => {
                 // Set cooldown for 3 seconds after successful operation
                 setTimeout(() => setCooldown(false), 3000);
 
-                Alert.alert(
-                    "Goodbye! 👋",
-                    `Thanks for your workout!\n\nSession Duration: ${duration} minutes\nEntry: ${entryTime.toLocaleTimeString()}\nExit: ${exitTime.toLocaleTimeString()}\n\nSee you next time!`
-                );
+                setCurrentSession({ entryTime, exitTime, duration });
+                setShowRatingModal(true);
             } else {
                 // User is checking in
                 const entryTime = new Date();
@@ -211,6 +212,52 @@ const QR = () => {
 
     const toggleFlash = () => {
         setTorch(!torch);
+    };
+
+    const handleRatingSubmit = async (difficultyRating: number, musclePainRating: number) => {
+        try {
+            if (!currentSession || !auth.currentUser) {
+                throw new Error('No session data or user found');
+            }
+
+            // Update the gym entry with ratings
+            const gymentriesRef = collection(getFirestore(), 'gymentries');
+            const sessionQuery = query(
+                gymentriesRef,
+                where('userId', '==', auth.currentUser.uid),
+                where('exitTime', '!=', null),
+                orderBy('exitTime', 'desc'),
+                limit(1)
+            );
+
+            const sessionSnapshot = await getDocs(sessionQuery);
+            if (!sessionSnapshot.empty) {
+                const sessionDoc = sessionSnapshot.docs[0];
+                await updateDoc(doc(getFirestore(), 'gymentries', sessionDoc.id), {
+                    difficultyRating,
+                    musclePainRating,
+                    ratedAt: new Date()
+                });
+            }
+
+            console.log('Ratings saved successfully');
+        } catch (error) {
+            console.error('Error saving ratings:', error);
+            Alert.alert('Error', 'Failed to save your ratings. Please try again.');
+        }
+    };
+
+    const handleRatingModalClose = () => {
+        setShowRatingModal(false);
+        setCurrentSession(null);
+        
+        // Show thank you message after rating modal closes
+        if (currentSession) {
+            Alert.alert(
+                "Goodbye! 👋",
+                `Thanks for your workout!\n\nSession Duration: ${currentSession.duration} minutes\nEntry: ${currentSession.entryTime.toLocaleTimeString()}\nExit: ${currentSession.exitTime.toLocaleTimeString()}\n\nSee you next time!`
+            );
+        }
     };
 
     return (
@@ -267,6 +314,14 @@ const QR = () => {
                     </View>
                 )}
             </CameraView>
+            
+            {/* Workout Rating Modal */}
+            <WorkoutRatingModal
+                visible={showRatingModal}
+                onClose={handleRatingModalClose}
+                onSubmitRating={handleRatingSubmit}
+                duration={currentSession?.duration || 0}
+            />
         </View>
     );
 };

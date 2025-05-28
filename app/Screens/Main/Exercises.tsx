@@ -121,7 +121,7 @@ const Exercises = () => {
                 </View>
 
                 <Text style={styles.title}>All Exercises</Text>
-                <View style={styles.exercisesGrid}>
+                <View style={styles.exercisesList}>
                     {exercises.map((exercise) => (
                         <TouchableOpacity 
                             key={exercise.id}
@@ -187,13 +187,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 20,
     },
-    exercisesGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
+    exercisesList: {
+        flexDirection: 'column',
     },
     exerciseCard: {
-        width: '48%',
+        width: '100%',
         backgroundColor: 'white',
         borderRadius: 10,
         marginBottom: 16,
@@ -206,24 +204,27 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 5,
         overflow: 'hidden',
+        flexDirection: 'row',
     },
     exerciseImage: {
-        width: '100%',
-        height: 150,
+        width: 120,
+        height: 120,
         borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+        borderBottomLeftRadius: 10,
     },
     placeholderImage: {
-        width: '100%',
-        height: 150,
+        width: 120,
+        height: 120,
         backgroundColor: '#f0f0f0',
         justifyContent: 'center',
         alignItems: 'center',
         borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+        borderBottomLeftRadius: 10,
     },
     exerciseInfo: {
+        flex: 1,
         padding: 12,
+        justifyContent: 'center',
     },
     exerciseName: {
         fontSize: 16,
