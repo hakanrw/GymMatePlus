@@ -162,6 +162,9 @@ KURALLAR:
 5. Kesinlikle sadece JSON döndür, açıklama ekleme
 6. Program objesinde {user_info['workout_days']} adet gün olmalı
 7. Her egzersiz için exercise, sets ve rpe alanları olmalı
+8. Sadece ve sadece altta verilen JSON verisindeki programlar arasından seçim yap
+
+!!!!! ÖNEMLİ: Sadece altta verilen JSON verisindeki programlar arasından seçim yap !!!!!
 
 İşte seviye bazlı JSON verisi:
 {level_specific_json}

@@ -60,7 +60,7 @@ service cloud.firestore {
         // Admins can update all fields including accountType
         return newData.keys().hasOnly(oldData.keys()) && // no new fields added
                (isAdmin() || 
-                newData.diff(oldData).affectedKeys().hasOnly(['height', 'weight']));
+                newData.diff(oldData).affectedKeys().hasOnly(['height', 'weight', 'program']));
       }
     }
 
