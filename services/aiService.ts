@@ -29,13 +29,19 @@ class AIService {
                 this.conversationHistory = messageHistory;
             }
 
+            console.log('[DEBUG] 🔄 Attempting to connect to AI server:', this.baseUrl);
+            
             // Try to call the real AI server
             const response = await this.callAIServer(userMessage);
             this.retryCount = 0; // Reset retry count on success
+            
+            console.log('[DEBUG] ✅ AI server responded successfully');
             return response;
 
         } catch (error) {
-            console.error('AI Service Error:', error);
+            console.error('[DEBUG] ❌ AI Service Error:', error);
+            console.error('[DEBUG] 📍 Server URL:', this.baseUrl);
+            console.error('[DEBUG] 📄 Error details:', JSON.stringify(error, null, 2));
             
             // If server is not available, use fallback responses
             return this.getFallbackResponse(userMessage);
@@ -47,6 +53,13 @@ class AIService {
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
         try {
+            console.log('[DEBUG] 📡 Making HTTP request to:', `${this.baseUrl}/chat`);
+            console.log('[DEBUG] 📝 Request payload:', {
+                message: userMessage,
+                user_id: getAuth().currentUser?.uid || 'anonymous',
+                conversation_length: this.conversationHistory.length
+            });
+
             const response = await fetch(`${this.baseUrl}/chat`, {
                 method: 'POST',
                 headers: {
@@ -62,12 +75,16 @@ class AIService {
             });
 
             clearTimeout(timeoutId);
+            
+            console.log('[DEBUG] 📊 Response status:', response.status);
+            console.log('[DEBUG] 📋 Response headers:', JSON.stringify([...response.headers.entries()]));
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data: AIResponse = await response.json();
+            console.log('[DEBUG] 📦 Response data:', data);
 
             if (data.success && data.response) {
                 // Check if a program was created
@@ -85,6 +102,8 @@ class AIService {
 
         } catch (error: any) {
             clearTimeout(timeoutId);
+            
+            console.error('[DEBUG] 🚨 HTTP Request failed:', error);
             
             if (error.name === 'AbortError') {
                 throw new Error('AI server response timeout');
@@ -105,7 +124,7 @@ class AIService {
             const auth = getAuth();
             const currentUser = auth.currentUser;
             
-            if (!currentUser) {
+            if (!currentUser || !currentUser.uid) {
                 console.error('No authenticated user found');
                 return;
             }
@@ -127,7 +146,7 @@ class AIService {
             };
 
             // Save to Firebase
-            const userDoc = doc(firestore, 'users',getAuth().currentUser?.uid); // Replace with actual user ID
+            const userDoc = doc(firestore, 'users', currentUser.uid);
             await setDoc(userDoc, { 
                 program,
             }, { merge: true });
