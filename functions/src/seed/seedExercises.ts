@@ -15,7 +15,7 @@ const exercises = [
       targetMuscles: ["Pectoralis Major", "Anterior Deltoids", "Triceps"],
       equipment: "Barbell",
       difficulty: "Intermediate",
-      imageUrl: "https://cdn.mos.cms.futurecdn.net/pLaRi5jXSHDKu6WRydetBo-650-80.jpg.webp"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fbench-press.webp?alt=media&token=f519842b-d240-4bbf-990f-74c6f10dd499"
   },
   {
       name: "Bicep Curls",
@@ -31,7 +31,7 @@ const exercises = [
       targetMuscles: ["Biceps Brachii", "Brachialis"],
       equipment: "Dumbbells",
       difficulty: "Beginner",
-      imageUrl: "https://hips.hearstapps.com/hmg-prod/images/dumbbell-workout-royalty-free-image-1703068569.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fbicep-curls.jpg?alt=media&token=f675eac5-94c1-4d7d-aed4-1328776f778a"
   },
   {
       name: "Squats",
@@ -47,7 +47,7 @@ const exercises = [
       targetMuscles: ["Gluteus Maximus", "Quadriceps", "Hamstrings"],
       equipment: "Bodyweight",
       difficulty: "Beginner",
-      imageUrl: "https://media.glamourmagazine.co.uk/photos/6138a5b2236c41e831489fec/16:9/w_2240,c_limit/gettyimages-1219540136_sf.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fsquats.webp?alt=media&token=d2892473-7980-4216-b92a-d7ac9fc18732"
   },
   {
       name: "Treadmill Running",
@@ -63,7 +63,7 @@ const exercises = [
       targetMuscles: ["Cardiovascular System", "Legs", "Core"],
       equipment: "Treadmill",
       difficulty: "Beginner",
-      imageUrl: "https://cdn.prod.website-files.com/667e874f45b06e6a2960bd2e/678cc2edf00c3325b4efa626_enjoy-treadmill-runs.webp"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Ftreadmill-running.webp?alt=media&token=fee181c0-b734-4332-998b-fd07aaa4cbd7"
   },
   {
       name: "Push-ups",
@@ -79,7 +79,7 @@ const exercises = [
       targetMuscles: ["Pectoralis Major", "Anterior Deltoids", "Triceps", "Core"],
       equipment: "Bodyweight",
       difficulty: "Beginner",
-      imageUrl: "https://www.formlakal.com/wp-content/uploads/2023/10/wsi-imageoptim-0-Push-Up-Hareketi-Nasil-Yapilir_.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fpush-ups.jpg?alt=media&token=b3a7bad2-9bef-42bc-bcf6-9d23d3740809"
   },
   {
       name: "Hammer Curls",
@@ -95,7 +95,7 @@ const exercises = [
       targetMuscles: ["Biceps Brachii", "Brachialis", "Brachioradialis"],
       equipment: "Dumbbells",
       difficulty: "Beginner",
-      imageUrl: "https://www.shape.com/thmb/zM_afeI7D3spw4da9OqU4-KDGR0=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/hammer-curls-form-5c6c9cfb28f34c8e97cd64812156a9d1.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fhammer-curls.jpg?alt=media&token=adbc8b7e-ff68-42b8-98ea-d99801deb060"
   },
   {
       name: "Deadlift",
@@ -111,7 +111,7 @@ const exercises = [
       targetMuscles: ["Erector Spinae", "Gluteus Maximus", "Hamstrings"],
       equipment: "Barbell",
       difficulty: "Advanced",
-      imageUrl: "https://www.gymshark.com/_next/image?url=https%3A%2F%2Fimages.ctfassets.net%2F8urtyqugdt2l%2F5ZN0GgcR2fSncFwnKuL1RP%2Fe603ba111e193d35510142c7eff9aae4%2Fdesktop-deadlift.jpg&w=3840&q=85"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fdeadlift.webp?alt=media&token=4a4d3dde-6338-498d-a900-412d38626060"
   },
   {
       name: "Lat Pulldown",
@@ -127,7 +127,7 @@ const exercises = [
       targetMuscles: ["Latissimus Dorsi", "Biceps", "Rhomboids"],
       equipment: "Cable Machine",
       difficulty: "Beginner",
-      imageUrl: "https://uk.gymshark.com/_next/image?url=https%3A%2F%2Fimages.ctfassets.net%2F8urtyqugdt2l%2Fj8TroKCQxtcHCSG7qRXQ9%2Ff11076a19165cd299eaa3ee2609b10c6%2Fdesktop-lat-pulldown.jpg&w=3840&q=85"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Flat_pulldown.jpg?alt=media&token=7431572f-bc23-4cae-ac48-16b1cc30bc4a"
   },
   {
       name: "Overhead Press",
@@ -143,7 +143,7 @@ const exercises = [
       targetMuscles: ["Deltoids", "Triceps", "Upper Chest"],
       equipment: "Barbell",
       difficulty: "Intermediate",
-      imageUrl: "https://www.macfit.com/wp-content/uploads/2025/01/overhead-press-hareketinde-ideal-tekrar-ve-set-sayisi.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Foverhead-press.jpg?alt=media&token=7511f80d-fe1b-41d7-af96-0b093c770024"
   },
   {
       name: "Leg Press",
@@ -159,7 +159,7 @@ const exercises = [
       targetMuscles: ["Quadriceps", "Gluteus Maximus", "Hamstrings"],
       equipment: "Leg Press Machine",
       difficulty: "Intermediate",
-      imageUrl: "https://imagely.mirafit.co.uk/wp/wp-content/uploads/2023/03/woman-using-Mirafit-Leg-Press-Machine-1024x683.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fleg-pres.webp?alt=media&token=53a3850e-8267-42d4-b99d-b9d530e14c36"
   },
   {
       name: "Plank",
@@ -175,7 +175,7 @@ const exercises = [
       targetMuscles: ["Rectus Abdominis", "Transverse Abdominis", "Lower Back"],
       equipment: "Bodyweight",
       difficulty: "Beginner",
-      imageUrl: "https://hips.hearstapps.com/hmg-prod/images/hdm119918mh15842-1545237096.png?crop=0.668xw:1.00xh;0.117xw,0&resize=1200:*"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fplank.jpg?alt=media&token=e05e7456-5700-4dcc-ac98-43da6815bcc5"
   },
   {
       name: "Dumbbell Lunges",
@@ -190,7 +190,7 @@ const exercises = [
       targetMuscles: ["Quadriceps", "Gluteus Maximus", "Hamstrings"],
       equipment: "Dumbbells",
       difficulty: "Intermediate",
-      imageUrl: "https://media.istockphoto.com/id/1210548146/photo/slim-hispanic-girl-doing-lunges-with-dumbbells-at-home-empty-space.jpg?s=612x612&w=0&k=20&c=p5SsMquVf3QJMdDHBhXAbTRitp11ooOrlUnjtMIYKBo="
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fdumbell-lunge.png?alt=media&token=2eb33499-df6a-43bc-b813-58b2b17093e2"
   },
   {
       name: "Tricep Dips",
@@ -206,7 +206,7 @@ const exercises = [
       targetMuscles: ["Triceps Brachii", "Shoulders", "Chest"],
       equipment: "Bodyweight or Parallel Bars",
       difficulty: "Intermediate",
-      imageUrl: "https://www.verywellfit.com/thmb/L8ErPvWV1_VqdZiD_GlGhUw1IuA=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/About-2A15-TricepDips-935-e3cd3eddc0c149fc91299b420aa6b236.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Ftricep-dips.webp?alt=media&token=198b19f4-44c7-46e6-b06a-43c89d830c07"
   },
   {
       name: "Russian Twists",
@@ -222,7 +222,7 @@ const exercises = [
       targetMuscles: ["Obliques", "Rectus Abdominis"],
       equipment: "Medicine Ball or Dumbbell",
       difficulty: "Intermediate",
-      imageUrl: "https://julielohre.com/wp-content/uploads/2018/02/Russian-Twist-Ab-Exercise.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Frussian-twist.jpg?alt=media&token=4e7a1464-df93-49e0-a065-53e4c65e4581"
   },
   {
       name: "Seated Row",
@@ -238,7 +238,7 @@ const exercises = [
       targetMuscles: ["Rhomboids", "Latissimus Dorsi", "Trapezius"],
       equipment: "Cable Machine",
       difficulty: "Beginner",
-      imageUrl: "https://imagely.mirafit.co.uk/wp/wp-content/uploads/2023/05/How-To-Use-Seated-Row-Machine-1.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fseated-row.jpg?alt=media&token=75717383-df3d-4051-82e8-1dc4484b07ec"
   },
   {
       name: "Mountain Climbers",
@@ -254,7 +254,7 @@ const exercises = [
       targetMuscles: ["Core", "Legs", "Shoulders"],
       equipment: "Bodyweight",
       difficulty: "Intermediate",
-      imageUrl: "https://phantom-marca.unidadeditorial.es/626f21470e0783603e814a740083cede/resize/828/f/jpg/assets/multimedia/imagenes/2022/02/17/16451166390506.jpg"
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/plus-gymmate.firebasestorage.app/o/excercise%2Fmountain-climbers.png?alt=media&token=0caa6f94-09f9-4a54-acb9-c738275d857c"
   }
 ];
 
