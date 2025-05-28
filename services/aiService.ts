@@ -17,7 +17,7 @@ interface AIResponse {
 }
 
 class AIService {
-    private baseUrl = __DEV__ ? 'http://192.168.1.80:8000' : 'http://your-production-server:5000'; // Android emulator uses 10.0.2.2
+    private baseUrl = __DEV__ ? 'http://192.168.1.80:8000' : 'http://vps-8e6957ba.vps.ovh.net:8000'; // Android emulator uses 10.0.2.2
     private conversationHistory: Message[] = [];
     private retryCount = 0;
     private maxRetries = 2;
