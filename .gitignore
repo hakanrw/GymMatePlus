@@ -42,3 +42,6 @@ app-example
 .expo
 dist/
 web-build/
+
+#Service
+firebase_import/auth_export/serviceAccountKey.json

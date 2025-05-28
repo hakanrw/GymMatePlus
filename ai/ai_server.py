@@ -8,10 +8,11 @@ import json
 sys.path.append(os.path.dirname(__file__))
 
 try:
-    from gemini import generate_workout_program
+    from gemini import generate_workout_program, generate_chat_response
 except ImportError as e:
     print(f"Error importing gemini module: {e}")
     generate_workout_program = None
+    generate_chat_response = None
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React Native
@@ -253,6 +254,224 @@ def create_fallback_program(experience, goal, workout_days):
         ]
     
     return base_program[:workout_days]
+
+@app.route('/chat', methods=['POST'])
+def ai_chat():
+    try:
+        data = request.get_json()
+        
+        # Extract message and conversation history
+        message = data.get('message', '')
+        conversation_history = data.get('conversation_history', [])
+        user_id = data.get('user_id', '')
+        
+        if not message.strip():
+            return jsonify({
+                'success': False,
+                'error': 'Message cannot be empty'
+            }), 400
+        
+        # Call the Gemini AI function for general chat
+        if generate_chat_response:
+            try:
+                # Generate response using Gemini AI
+                ai_response = generate_chat_response(message, conversation_history)
+                
+                # Check if the response is a program creation request
+                try:
+                    response_json = json.loads(ai_response)
+                    if (response_json.get('action') == 'create_program' and 
+                        'workout_days' in response_json and 
+                        'goal' in response_json):
+                        
+                        print(f"[DEBUG] Program creation request detected in chat")
+                        
+                        # Get user profile from database (you'll need to implement this)
+                        user_profile = get_user_profile_from_db(user_id)
+                        if not user_profile:
+                            return jsonify({
+                                'success': True,
+                                'response': 'Üzgünüm, profilinizi bulamadım. Lütfen önce profil bilgilerinizi tamamlayın.',
+                                'timestamp': data.get('timestamp', '')
+                            })
+                        
+                        # Create user info for program generation
+                        user_info = {
+                            'gender': user_profile.get('gender', 'erkek').lower(),
+                            'experience': user_profile.get('experience', 'başlangıç').lower(),
+                            'goal': response_json['goal'],
+                            'workout_days': int(response_json['workout_days']),
+                            'focus_area': 'full_body'
+                        }
+                        
+                        # Map goal from English to Turkish for user display
+                        goal_display_map = {
+                            'muscle_gain': 'kas kazanımı',
+                            'fat_loss': 'yağ yakımı'
+                        }
+                        
+                        print(f"[DEBUG] Generating program with user_info: {user_info}")
+                        
+                        # Generate the program
+                        program_result = generate_workout_program(user_info)
+                        program_data = json.loads(program_result)
+                        
+                        if 'error' in program_data:
+                            return jsonify({
+                                'success': True,
+                                'response': f"Program oluşturulurken bir hata oluştu: {program_data['error']}",
+                                'timestamp': data.get('timestamp', '')
+                            })
+                        
+                        # Format success response with program
+                        success_message = f"""🎉 **Harika! Sizin için özel antrenman programı hazırladım!**
+
+📊 **Program Detayları:**
+• Hedef: {goal_display_map.get(response_json['goal'], response_json['goal'])}
+• Süre: {response_json['workout_days']} gün/hafta
+• Seviye: {user_profile.get('experience', 'Başlangıç')}
+
+💪 Programınız başarıyla oluşturuldu ve profilinize kaydedildi. "Programlarım" sekmesinden detaylarını görüntüleyebilirsiniz.
+
+Başarılı antrenmanlar dilerim! Herhangi bir sorunuz olursa çekinmeyin."""
+                        
+                        return jsonify({
+                            'success': True,
+                            'response': success_message,
+                            'program_created': True,
+                            'program': program_data.get('program', {}),
+                            'user_info': {
+                                'goal': goal_display_map.get(response_json['goal'], response_json['goal']),
+                                'workout_days': response_json['workout_days'],
+                                'experience': user_profile.get('experience', 'Başlangıç')
+                            },
+                            'timestamp': data.get('timestamp', '')
+                        })
+                        
+                except json.JSONDecodeError:
+                    # Not a JSON response, treat as normal chat
+                    pass
+                
+                # Normal chat response
+                return jsonify({
+                    'success': True,
+                    'response': ai_response,
+                    'timestamp': data.get('timestamp', '')
+                })
+                
+            except Exception as e:
+                print(f"Error calling Gemini AI for chat: {e}")
+                # Return fallback response if Gemini fails
+                fallback_response = get_fallback_chat_response(message)
+                return jsonify({
+                    'success': True,
+                    'response': fallback_response,
+                    'note': 'Using fallback response due to AI unavailability'
+                })
+        else:
+            # Gemini module not available, use fallback
+            fallback_response = get_fallback_chat_response(message)
+            return jsonify({
+                'success': True,
+                'response': fallback_response,
+                'note': 'Using fallback response - Gemini AI not available'
+            })
+            
+    except Exception as e:
+        print(f"Error in ai_chat: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+def get_user_profile_from_db(user_id):
+    """
+    Get user profile from Firebase Firestore
+    Returns user profile with gender and experience fields
+    """
+    try:
+        # Import Firebase here to avoid circular imports
+        import firebase_admin
+        from firebase_admin import firestore
+        
+        # Get Firestore client (assuming Firebase is already initialized)
+        db = firestore.client()
+        
+        # Query user document
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+        
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            print(f"[DEBUG] User profile found: {user_data}")
+            return user_data
+        else:
+            print(f"[DEBUG] User profile not found for user_id: {user_id}")
+            return None
+            
+    except Exception as e:
+        print(f"[ERROR] Failed to get user profile from database: {e}")
+        return None
+
+def get_fallback_chat_response(message):
+    """Provide fallback responses when Gemini AI is not available"""
+    message_lower = message.lower()
+    
+    if any(word in message_lower for word in ['program', 'antrenman', 'workout']):
+        return """💪 **Antrenman Programı**
+
+Program oluşturmak için şu bilgileri paylaşabilir misiniz:
+• Cinsiyetiniz (Erkek/Kadın)
+• Deneyim seviyeniz (Başlangıç/Orta/İleri)
+• Hedefiniz (Kas kazanımı/Yağ yakımı)
+• Haftada kaç gün antrenman yapmak istiyorsunuz?
+
+Bu bilgilerle size özel bir program hazırlayabilirim!"""
+
+    elif any(word in message_lower for word in ['beslenme', 'diyet', 'protein', 'nutrition']):
+        return """🥗 **Beslenme Rehberi**
+
+**Temel Prensipler:**
+• Protein: Vücut ağırlığınızın kg başına 1.6-2.2g
+• Su: Günde en az 2.5-3 litre  
+• Öğün sayısı: 3-5 öğün düzenli saatlerde
+
+**Kaliteli Protein Kaynakları:**
+• Tavuk göğsü, hindi
+• Balık (somon, ton balığı)
+• Yumurta
+• Peynir, süt ürünleri
+• Baklagiller
+
+Daha detaylı beslenme planı için lütfen diyetisyene danışın."""
+
+    elif any(word in message_lower for word in ['dinlenme', 'uyku', 'recovery', 'toparlanma']):
+        return """😴 **Toparlanma ve Dinlenme**
+
+**Uyku:**
+• Günde 7-9 saat kaliteli uyku
+• Düzenli uyku saatleri
+• Yatak odası serin ve karanlık
+
+**Dinlenme Günleri:**
+• Haftada en az 1-2 tam dinlenme günü
+• Aktif dinlenme: hafif yürüyüş, germe
+• Aynı kas grubunu ardışık günlerde çalıştırmayın
+
+Toparlanma antrenmanın en az antrenman kadar önemli bir parçasıdır!"""
+
+    else:
+        return """🤖 **GymMate+ AI Antrenör**
+
+Merhaba! Size şu konularda yardımcı olabilirim:
+
+💪 **Antrenman Programları**
+🥗 **Beslenme Rehberi** 
+😴 **Toparlanma Tavsiyeleri**
+🏋️‍♀️ **Egzersiz Teknikleri**
+📊 **Fitness Hedefleri**
+
+Hangi konuda yardıma ihtiyacınız var?"""
 
 @app.route('/health', methods=['GET'])
 def health_check():

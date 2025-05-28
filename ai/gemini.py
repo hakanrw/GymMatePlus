@@ -362,6 +362,122 @@ def test_gymmate_ai():
     result7 = process_exercise_feedback("Facepull","3x10","RIR: 1", 15, feedback7 , "başlangıç",progress,exercises)
     print(result7)
 
+def generate_chat_response(message, conversation_history=None):
+    """
+    Generate AI chat response using Gemini for general fitness conversations
+    """
+    try:
+        print(f"[DEBUG] Generating chat response for message: {message}")
+        
+        # Initialize LLM
+        llm = ChatGoogleGenerativeAI(model="models/gemini-2.5-flash-preview-04-17")
+        
+        # Get exercise data for context
+        exercises_data = get_exercises_logic_data()
+        exercises_context = ""
+        if exercises_data:
+            exercises_context = json.dumps(exercises_data[:10], ensure_ascii=False, indent=2)  # Limit context size
+        
+        # Build conversation context
+        conversation_context = ""
+        if conversation_history and len(conversation_history) > 0:
+            conversation_context = "\n\n**Önceki Konuşma:**\n"
+            for msg in conversation_history[-6:]:  # Last 6 messages for context
+                role = "Kullanıcı" if msg.get('isUser', False) else "AI"
+                conversation_context += f"{role}: {msg.get('text', '')}\n"
+            conversation_context += "\n"
+        
+        # Create comprehensive fitness AI prompt with program detection
+        prompt_text = f"""
+Sen GymMate+ uygulamasının uzman AI fitness antrenörüsün. Türkçe konuş ve kullanıcılara fitness, beslenme, antrenman ve sağlık konularında profesyonel yardım sağla.
+
+**ÖNEMLİ: PROGRAM OLUŞTURMA ALGISI**
+Eğer kullanıcı antrenman programı oluşturmak istiyorsa ve gerekli bilgileri verdiyse, normal yanıt yerine aşağıdaki JSON formatında özel bir yanıt döndür:
+
+```json
+{{
+  "action": "create_program",
+  "workout_days": [3, 4, 5, veya 6],
+  "goal": "muscle_gain" veya "fat_loss"
+}}
+```
+
+**Program Oluşturma Koşulları:**
+1. Kullanıcı açıkça program istemiş olmalı (kelimeler: "program", "antrenman", "workout", "plan")
+2. Haftada kaç gün bilgisi verilmiş olmalı (3-6 arası)
+3. Hedef belirtilmiş olmalı (kas kazanımı = "muscle_gain", yağ yakımı/kilo verme = "fat_loss")
+
+**Hedef Eşleştirme:**
+- "kas kazanımı", "kas geliştirme", "bulk", "mass" → "muscle_gain"
+- "yağ yakımı", "kilo verme", "zayıflama", "cutting", "form" → "fat_loss"
+
+**Eksik Bilgi Varsa:**
+Normal sohbet yanıtı vererek eksik bilgileri sor. JSON döndürme!
+
+**Uzmanlık Alanların:**
+- Antrenman programları ve egzersiz teknikleri
+- Beslenme ve diyet tavsiyeleri  
+- Toparlanma ve dinlenme rehberi
+- Kas kazanımı ve yağ yakımı stratejileri
+- Fitness motivasyonu ve hedef belirleme
+- Yaralanma önleme ve rehabilitasyon
+
+**İletişim Kuralların:**
+1. Sıcak, destekleyici ve profesyonel ol
+2. Karmaşık konuları basit dille açıkla
+3. Emoji kullanarak mesajları görsel olarak zenginleştir
+4. Güvenlik her zaman öncelik - sağlık sorunları için doktora yönlendir
+5. Kişiselleştirilmiş tavsiyeler ver
+6. Motivasyonu artıracak pozitif dil kullan
+
+**Mevcut Egzersiz Bilgisi Bankası:**
+{exercises_context}
+
+{conversation_context}
+
+**Kullanıcının Şu Anki Mesajı:** {message}
+
+EĞER PROGRAM OLUŞTURMA KOŞULLARI SAĞLANIYORSA: JSON formatında yanıt ver
+AKSI HALDE: Normal sohbet yanıtı ver
+        """
+        
+        print(f"[DEBUG] Sending prompt to Gemini...")
+        
+        from langchain_core.messages import HumanMessage
+        result = llm.invoke([HumanMessage(content=prompt_text)])
+        
+        print(f"[DEBUG] Gemini chat response received: {result.content}")
+        
+        # Check if the response is a program creation JSON
+        response_content = result.content.strip()
+        
+        # Try to detect and parse JSON response
+        import re
+        json_match = re.search(r'```json\s*(\{.*?\})\s*```', response_content, re.DOTALL)
+        if not json_match:
+            json_match = re.search(r'(\{.*?"action".*?\})', response_content, re.DOTALL)
+        
+        if json_match:
+            try:
+                json_str = json_match.group(1) if json_match.groups() else json_match.group()
+                program_request = json.loads(json_str)
+                
+                if (program_request.get('action') == 'create_program' and 
+                    'workout_days' in program_request and 
+                    'goal' in program_request):
+                    
+                    print(f"[DEBUG] Program creation request detected: {program_request}")
+                    return json.dumps(program_request)
+                    
+            except json.JSONDecodeError as e:
+                print(f"[DEBUG] Failed to parse JSON from response: {e}")
+        
+        # If not a program request, return normal chat response
+        return response_content
+        
+    except Exception as e:
+        print(f"[ERROR] Error generating chat response: {e}")
+        return f"Üzgünüm, şu anda teknik bir sorun yaşıyorum. Sorunuzu tekrar sorabilir misiniz? Hata: {str(e)}"
 
 if __name__ == "__main__":
     test_gymmate_ai()

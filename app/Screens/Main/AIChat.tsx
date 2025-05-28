@@ -52,7 +52,10 @@ const AIChat: React.FC = () => {
 
     const generateResponse = async (userMessage: string): Promise<string> => {
         try {
-            return await aiService.generateResponse(userMessage);
+            // Update the AI service with current conversation history
+            aiService.updateConversationHistory(messages);
+            
+            return await aiService.generateResponse(userMessage, messages);
         } catch (error) {
             console.error('AI response error:', error);
             return 'Üzgünüm, şu anda bir teknik sorun yaşıyorum. Lütfen daha sonra tekrar deneyin.';

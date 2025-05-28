@@ -1,148 +1,183 @@
-import programService from './programService';
-import { collection, query, where, getDocs } from '@firebase/firestore';
+import { collection, query, where, getDocs, addDoc } from '@firebase/firestore';
 import { firestore } from '../app/firebaseConfig';
-import { doc, setDoc } from '@firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-interface UserInfo {
-    gender?: string;
-    experience?: string;
-    goal?: string;
-    workout_days?: string;
-    focus_area?: string;
-}
-
-interface Exercise {
+interface Message {
     id: string;
-    name: string;
-    area: string;
-    description: string;
-    instructions: string[];
-    targetMuscles: string[];
-    equipment: string;
-    difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-    imageUrl?: string;
+    text: string;
+    isUser: boolean;
+    timestamp: Date;
 }
 
-interface WorkoutDay {
-  exercise: string;
-  sets: string;
-  rpe: string;
-}
-
-interface WorkoutProgram {
-  [key: string]: WorkoutDay[];
+interface AIResponse {
+    success: boolean;
+    response?: string;
+    error?: string;
+    note?: string;
 }
 
 class AIService {
-    private userInfo: UserInfo = {};
+    private baseUrl = __DEV__ ? 'http://192.168.1.80:8000' : 'http://your-production-server:5000'; // Android emulator uses 10.0.2.2
+    private conversationHistory: Message[] = [];
+    private retryCount = 0;
+    private maxRetries = 2;
 
-    async generateResponse(userMessage: string): Promise<string> {
+    async generateResponse(userMessage: string, messageHistory?: Message[]): Promise<string> {
+        try {
+            // Update conversation history
+            if (messageHistory) {
+                this.conversationHistory = messageHistory;
+            }
+
+            // Try to call the real AI server
+            const response = await this.callAIServer(userMessage);
+            this.retryCount = 0; // Reset retry count on success
+            return response;
+
+        } catch (error) {
+            console.error('AI Service Error:', error);
+            
+            // If server is not available, use fallback responses
+            return this.getFallbackResponse(userMessage);
+        }
+    }
+
+    private async callAIServer(userMessage: string): Promise<string> {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+        try {
+            const response = await fetch(`${this.baseUrl}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: userMessage,
+                    conversation_history: this.conversationHistory.slice(-6), // Last 6 messages for context
+                    user_id: getAuth().currentUser?.uid || '',
+                    timestamp: new Date().toISOString()
+                }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data: AIResponse = await response.json();
+
+            if (data.success && data.response) {
+                // Check if a program was created
+                if ((data as any).program_created) {
+                    console.log('Program created by AI:', (data as any).program);
+                    
+                    // Save the program to Firebase
+                    await this.saveProgramToFirebase((data as any).program, (data as any).user_info);
+                }
+                
+                return data.response;
+            } else {
+                throw new Error(data.error || 'AI response failed');
+            }
+
+        } catch (error: any) {
+            clearTimeout(timeoutId);
+            
+            if (error.name === 'AbortError') {
+                throw new Error('AI server response timeout');
+            }
+            
+            // Check if it's a network error
+            if (error.message.includes('Network request failed') || 
+                error.message.includes('fetch')) {
+                throw new Error('AI server is not available');
+            }
+            
+            throw error;
+        }
+    }
+
+    private async saveProgramToFirebase(program: any, userInfo: any): Promise<void> {
+        try {
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+            
+            if (!currentUser) {
+                console.error('No authenticated user found');
+                return;
+            }
+
+            // Save to user's programs collection
+            const programData = {
+                name: `AI Programı - ${userInfo.goal}`,
+                description: `${userInfo.workout_days} gün/hafta ${userInfo.goal} programı`,
+                difficulty: userInfo.experience || 'Başlangıç',
+                estimatedDuration: '45-60 dakika',
+                equipment: 'Gym Equipment',
+                goal: userInfo.goal,
+                workoutDays: userInfo.workout_days,
+                program: program,
+                createdBy: 'AI',
+                createdAt: new Date(),
+                userId: currentUser.uid,
+                isActive: true
+            };
+
+            // Save to Firebase
+            await addDoc(collection(firestore, 'userPrograms'), programData);
+            
+            console.log('Program successfully saved to Firebase');
+            
+        } catch (error) {
+            console.error('Error saving program to Firebase:', error);
+        }
+    }
+
+    private getFallbackResponse(userMessage: string): string {
         const message = userMessage.toLowerCase();
         
-        // Check for new program request - reset user info
-        if (message.includes('yeni') && (message.includes('program') || message.includes('antrenman'))) {
-            this.userInfo = {}; // Reset user information
-            return await this.handleProgramRequest(userMessage);
-        }
-        
-        // Program creation flow
+        // Program creation requests
         if (message.includes('program') || message.includes('antrenman')) {
-            return await this.handleProgramRequest(userMessage);
+            return `💪 **Antrenman Programı**
+
+Program oluşturmak için şu bilgileri paylaşabilir misiniz:
+• Cinsiyetiniz (Erkek/Kadın)  
+• Deneyim seviyeniz (Başlangıç/Orta/İleri)
+• Hedefiniz (Kas kazanımı/Yağ yakımı)
+• Haftada kaç gün antrenman yapmak istiyorsunuz?
+
+Bu bilgilerle size özel bir program hazırlayabilirim!
+
+🤖 **AI Sunucu Durumu:** Şu anda Gemini AI'ya bağlanamıyorum. Daha gelişmiş AI yanıtlar için:
+1. \`ai\` klasöründeki \`ai_server.py\`'yi çalıştırın
+2. Terminal: \`cd ai && python ai_server.py\`
+3. Server: http://localhost:5000 adresinde çalışmalı`;
         }
         
         // Exercise technique questions
         if (message.includes('bench press') || message.includes('göğüs')) {
-            return await this.handleExerciseQuestion('Bench Press');
+            return this.getExerciseInfo('Bench Press') + '\n\n🤖 **Not:** Gemini AI aktif olsaydı daha detaylı analiz verebilirdim.';
         }
         
         if (message.includes('squat') || message.includes('çömelme')) {
-            return await this.handleExerciseQuestion('Squat');
+            return this.getExerciseInfo('Squat') + '\n\n🤖 **Not:** Gemini AI aktif olsaydı daha detaylı analiz verebilirdim.';
         }
         
         if (message.includes('deadlift') || message.includes('ölü kaldırış')) {
-            return await this.handleExerciseQuestion('Deadlift');
+            return this.getExerciseInfo('Deadlift') + '\n\n🤖 **Not:** Gemini AI aktif olsaydı daha detaylı analiz verebilirdim.';
         }
         
         // Nutrition questions
         if (message.includes('beslenme') || message.includes('diyet') || message.includes('protein')) {
-            return this.handleNutritionQuestion(userMessage);
-        }
-        
-        // Recovery questions
-        if (message.includes('dinlenme') || message.includes('uyku') || message.includes('toparlanma')) {
-            return this.handleRecoveryQuestion();
-        }
-        
-        // Goal-specific questions
-        if (message.includes('kas kazanımı') || message.includes('bulk')) {
-            return this.handleGoalQuestion('muscle_gain');
-        }
-        
-        if (message.includes('yağ yakımı') || message.includes('kilo verme') || message.includes('cut')) {
-            return this.handleGoalQuestion('fat_loss');
-        }
-        
-        // User info collection
-        if (this.isUserInfoResponse(userMessage)) {
-            return await this.collectUserInfo(userMessage);
-        }
-        
-        return this.getDefaultResponse();
-    }
-    
-    private async handleProgramRequest(message: string): Promise<string> {
-        // Önce mesajdan bilgileri çek
-        const result = await this.collectUserInfo(message);
-
-        if (!this.userInfo.gender || !this.userInfo.experience || !this.userInfo.goal || !this.userInfo.workout_days) {
-            return result;
-        }
-
-        return result;
-    }
-    
-    private async handleExerciseQuestion(exerciseName: string): Promise<string> {
-        try {
-            const exercisesRef = collection(firestore, 'exercises');
-            const q = query(exercisesRef, where('name', '==', exerciseName));
-            const querySnapshot = await getDocs(q);
-            
-            if (querySnapshot.empty) {
-                return "Bu egzersiz hakkında daha spesifik bir soru sorabilir misiniz?";
-            }
-
-            const exercise = querySnapshot.docs[0].data() as Exercise;
-            
-            return `🏋️‍♀️ **${exercise.name} Tekniği:**
-
-**Açıklama:**
-${exercise.description}
-
-**Hedef Kaslar:**
-${exercise.targetMuscles.map(muscle => `• ${muscle}`).join('\n')}
-
-**Ekipman:**
-• ${exercise.equipment}
-
-**Zorluk Seviyesi:**
-• ${exercise.difficulty}
-
-**Adımlar:**
-${exercise.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
-        } catch (error) {
-            console.error('Error fetching exercise:', error);
-            return "Üzgünüm, egzersiz bilgilerini getirirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.";
-        }
-    }
-    
-    private handleNutritionQuestion(message: string): string {
-        return `🥗 **Beslenme Rehberi:**
+            return `🥗 **Beslenme Rehberi**
 
 **Temel Prensipler:**
-• **Protein:** Vücut ağırlığınızın kg başına 1.6-2.2g
-• **Su:** Günde en az 2.5-3 litre
-• **Öğün sayısı:** 3-5 öğün düzenli saatlerde
+• Protein: Vücut ağırlığınızın kg başına 1.6-2.2g
+• Su: Günde en az 2.5-3 litre
+• Öğün sayısı: 3-5 öğün düzenli saatlerde
 
 **Kaliteli Protein Kaynakları:**
 • Tavuk göğsü, hindi
@@ -161,11 +196,12 @@ ${exercise.instructions.map((instruction, index) => `${index + 1}. ${instruction
 • Protein oranını artırın
 • Lifli gıdalara odaklanın
 
-💡 Detaylı beslenme planı için diyetisyene danışmanızı öneririm.`;
-    }
-    
-    private handleRecoveryQuestion(): string {
-        return `😴 **Toparlanma ve Dinlenme:**
+🤖 **Gemini AI:** Aktif olsaydı size kişiselleştirilmiş beslenme planı oluşturabilirdim.`;
+        }
+        
+        // Recovery questions
+        if (message.includes('dinlenme') || message.includes('uyku') || message.includes('toparlanma')) {
+            return `😴 **Toparlanma ve Dinlenme**
 
 **Uyku:**
 • Günde 7-9 saat kaliteli uyku
@@ -182,267 +218,105 @@ ${exercise.instructions.map((instruction, index) => `${index + 1}. ${instruction
 • Sosyal aktiviteler
 • Hobi edinme
 
-**Toparlanma İşaretleri:**
-• Sabah dinç uyanmak
-• Motivasyon seviyesinin yüksek olması
-• Kas ağrılarının azalması
-
-⚠️ Aşırı antrenman belirtilerinde dinlenme süresini artırın.`;
-    }
-    
-    private handleGoalQuestion(goal: string): string {
-        if (goal === 'muscle_gain') {
-            return `💪 **Kas Kazanımı Rehberi:**
-
-**Antrenman:**
-• Haftada 3-4 direnç antrenmanı
-• Büyük kas gruplarına odaklanın
-• 6-12 tekrar arası, 3-4 set
-• Progressive overload uygulayın
-
-**Beslenme:**
-• Kalori fazlası (300-500 kalori)
-• Protein: 2g/kg vücut ağırlığı
-• Karbonhidrat: antrenman için enerji
-• Sağlıklı yağlar ihmal etmeyin
-
-**Dinlenme:**
-• 48-72 saat kas grubu dinlenmesi
-• 7-9 saat uyku
-• Stres seviyesini düşük tutun
-
-**Beklentiler:**
-• Ayda 0.5-1 kg kas kazanımı
-• İlk 3 ay hızlı gelişim
-• Sabır ve tutarlılık çok önemli`;
-        } else {
-            return `🔥 **Yağ Yakımı Rehberi:**
-
-**Antrenman:**
-• Direnç antrenmanı + kardiyovasküler
-• HIIT antrenmanları etkili
-• Büyük kas grupları çalışın
-• Haftada 4-5 antrenman
-
-**Beslenme:**
-• Kalori açığı (300-500 kalori)
-• Yüksek protein (ağırlık koruması için)
-• Kompleks karbonhidratlar
-• Şeker ve işlenmiş gıda kısıtlama
-
-**Kardiyovasküler:**
-• Haftada 150-300 dk orta yoğunluk
-• HIIT: 15-20 dk yüksek yoğunluk
-• Yürüyüş günlük aktivite olarak
-
-**Beklentiler:**
-• Haftada 0.5-1 kg sağlıklı kayıp
-• İlk haftalar hızlı, sonra yavaşlar
-• Plateau dönemler normal`;
+🤖 **Gemini AI:** Aktif olsaydı uyku kalitenizi analiz edip kişisel öneriler verebilirdim.`;
         }
-    }
-    
-    private isUserInfoResponse(message: string): boolean {
-        const message_lower = message.toLowerCase();
-        return message_lower.includes('erkek') || 
-               message_lower.includes('kadın') || 
-               message_lower.includes('başlangıç') || 
-               message_lower.includes('orta') || 
-               message_lower.includes('ileri') ||
-               message_lower.includes('kas kazanımı') ||
-               message_lower.includes('yağ yakımı') ||
-               /\d+\s*(gün|gun)/.test(message_lower);
-    }
-    
-    private async collectUserInfo(message: string): Promise<string> {
-        const message_lower = message.toLowerCase();
-        // Gelişmiş regex ve anahtar kelime eşleştirme ile bilgileri çek
-        // Cinsiyet
-        if (/erkek/.test(message_lower)) this.userInfo.gender = 'Erkek';
-        if (/kad[ıi]n/.test(message_lower)) this.userInfo.gender = 'Kadın';
-        // Deneyim seviyesi
-        if (/ba[sş]lang[ıi]ç/.test(message_lower)) this.userInfo.experience = 'başlangıç';
-        else if (/orta/.test(message_lower)) this.userInfo.experience = 'orta seviye';
-        else if (/ileri/.test(message_lower)) this.userInfo.experience = 'ileri seviye';
-        // Hedef
-        if (/kas kazan[ıi]m[ıi]/.test(message_lower)) this.userInfo.goal = 'kas kazanımı';
-        else if (/ya[ğg] yak[ıi]m[ıi]/.test(message_lower)) this.userInfo.goal = 'yağ yakımı';
-        // Gün
-        const dayMatch = message_lower.match(/(\d+)\s*(gün|gun)/);
-        if (dayMatch) this.userInfo.workout_days = dayMatch[1];
-        // Alternatif: "haftada 4" gibi
-        const haftaMatch = message_lower.match(/hafta(da)?\s*(\d+)/);
-        if (haftaMatch) this.userInfo.workout_days = haftaMatch[2];
-        // Alternatif: sadece sayı ve gün geçiyorsa
-        if (!this.userInfo.workout_days) {
-            const altDayMatch = message_lower.match(/(\d{1,2})/);
-            if (altDayMatch) this.userInfo.workout_days = altDayMatch[1];
-        }
-        // Tüm bilgiler tamam mı?
-        if (this.userInfo.gender && this.userInfo.experience && this.userInfo.goal && this.userInfo.workout_days) {
-            const result = await this.generateAndSaveWorkoutProgram();
-            return result;
-        }
-        // Eksik bilgi varsa
-        const missing = [];
-        if (!this.userInfo.gender) missing.push('Cinsiyet (Erkek/Kadın)');
-        if (!this.userInfo.experience) missing.push('Deneyim seviyesi (Başlangıç/Orta/İleri)');
-        if (!this.userInfo.goal) missing.push('Hedef (Kas kazanımı/Yağ yakımı)');
-        if (!this.userInfo.workout_days) missing.push('Haftalık antrenman günü (örn: 3 gün)');
-        return `📝 **Teşekkürler! Şu bilgiler de gerekli:**\n\n${missing.map(item => `• ${item}`).join('\n')}\n\nÖrnek: "Erkek, başlangıç seviyesi, kas kazanımı hedefi, haftada 3 gün"`;
-    }
-    
-    private generateWorkoutProgram(): string {
-        const { gender, experience, goal, workout_days } = this.userInfo;
         
-        return `🎯 **Size Özel Antrenman Programı Oluşturuluyor...**
+        // Default response
+        return `🤖 **GymMate+ AI Antrenör** (Offline Mode)
 
-**Profil Özeti:**
-• Cinsiyet: ${gender}
-• Seviye: ${experience}
-• Hedef: ${goal}
-• Haftalık: ${workout_days} gün
+Merhaba! Şu anda **temel yanıt modunda** çalışıyorum. Size yardımcı olabileceğim konular:
 
-⏳ **Program hazırlanıyor ve kaydediliyor...**
+💪 **Antrenman Programları** (temel)
+🥗 **Beslenme Rehberi** (genel)
+😴 **Toparlanma Tavsiyeleri** (standart)
+🏋️‍♀️ **Egzersiz Teknikleri** (sınırlı)
 
-Bu bir saniye sürecek!`;
+---
+
+🚀 **Tam AI Deneyimi için:**
+1. Terminal açın: \`cd ai\`
+2. Komutu çalıştırın: \`python ai_server.py\`
+3. Server başladığında Gemini AI aktif olacak!
+
+**Gemini AI Avantajları:**
+✨ Kişiselleştirilmiş yanıtlar
+🧠 Konuşma geçmişini hatırlar  
+📊 Gelişmiş analiz ve öneriler
+🎯 Hedefinize özel programlar
+
+Hangi konuda yardıma ihtiyacınız var?`;
     }
-    
-    async generateAndSaveWorkoutProgram(): Promise<string> {
-        try {
-            console.log('[DEBUG] Program oluşturma başladı...');
-            console.log('[DEBUG] Kullanıcı bilgileri:', this.userInfo);
-            
-            // Deneyim seviyesini normalize et
-            this.userInfo.experience = this.normalizeExperience(this.userInfo.experience || '');
-            console.log('[DEBUG] Normalize edilmiş deneyim:', this.userInfo.experience);
-            
-            // Call the LLM API to generate the program
-            const response = await fetch('http://vps-8e6957ba.vps.ovh.net:8000/generate-program', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(this.userInfo),
-            });
 
-            if (!response.ok) {
-                throw new Error('Failed to generate program');
+    private getExerciseInfo(exerciseName: string): string {
+        const exercises = {
+            'Bench Press': {
+                description: 'Göğüs kaslarını geliştiren temel compound egzersiz',
+                targetMuscles: ['Pectoralis Major', 'Triceps', 'Anterior Deltoid'],
+                equipment: 'Barbell ve Bench',
+                instructions: [
+                    'Benchte sırt üstü uzanın',
+                    'Barı omuz genişliğinde tutun',
+                    'Barı göğsünüze doğru kontrollü indirin',
+                    'Güçlü bir şekilde yukarı itin',
+                    'Nefes kontrolünü unutmayın'
+                ]
+            },
+            'Squat': {
+                description: 'Bacak ve kalça kaslarını geliştiren temel egzersiz',
+                targetMuscles: ['Quadriceps', 'Hamstrings', 'Glutes'],
+                equipment: 'Barbell veya Dumbbell',
+                instructions: [
+                    'Ayakları omuz genişliğinde açın',
+                    'Sırtı düz tutun',
+                    'Kalçaları geriye doğru iterkn çömelin',
+                    'Dizler ayak parmaklarını geçmesin',
+                    'Topukları yere basarak kalkmaya odaklanın'
+                ]
+            },
+            'Deadlift': {
+                description: 'Tüm vücudu çalıştıran compound egzersiz',
+                targetMuscles: ['Hamstrings', 'Glutes', 'Erector Spinae', 'Traps'],
+                equipment: 'Barbell',
+                instructions: [
+                    'Ayakları kalça genişliğinde açın',
+                    'Barı ayakların üzerine getirin',
+                    'Sırtı düz tutarak eğilin',
+                    'Barı bacaklarınıza yakın tutun',
+                    'Kalça ve dizleri aynı anda açarak kalkın'
+                ]
             }
+        };
 
-            const responseText = await response.text();
-            console.log('[DEBUG] Raw response:', responseText);
-
-            // Try to parse the response as JSON
-            let program: WorkoutProgram;
-            try {
-                // First try to parse the response directly
-                const data = JSON.parse(responseText);
-                console.log('[DEBUG] Parsed response data:', data);
-
-                if (!data.success) {
-                    throw new Error(data.error || 'Program oluşturulamadı');
-                }
-
-                if (!data.program || typeof data.program !== 'object') {
-                    throw new Error('Invalid program format: program must be an object');
-                }
-
-                // The program is already in the correct format
-                program = data.program;
-
-                console.log('[DEBUG] Program:', program);
-            } catch (e) {
-                console.error('[DEBUG] JSON parse hatası:', e);
-                throw new Error('Program oluşturulamadı: Geçersiz program formatı');
-            }
-
-            if (!program || Object.keys(program).length === 0) {
-                throw new Error('Program oluşturulamadı: Boş program');
-            }
-
-            // Validate program structure
-            const days = Object.keys(program);
-            if (days.length === 0) {
-                throw new Error('Program oluşturulamadı: Gün bulunamadı');
-            }
-
-            for (const day of days) {
-                if (!Array.isArray(program[day])) {
-                    throw new Error(`Program oluşturulamadı: ${day} günü için geçersiz format`);
-                }
-                if (program[day].length === 0) {
-                    throw new Error(`Program oluşturulamadı: ${day} günü için egzersiz bulunamadı`);
-                }
-                for (const exercise of program[day]) {
-                    if (!exercise.exercise || !exercise.sets || !exercise.rpe) {
-                        throw new Error(`Program oluşturulamadı: ${day} gününde eksik egzersiz bilgisi`);
-                    }
-                }
-            }
-            
-            console.log('[DEBUG] Firebase\'e kaydetme başlıyor...');
-            
-            // Save program as a field in the user document
-            const userDoc = doc(firestore, 'users',getAuth().currentUser?.uid); // Replace with actual user ID
-            await setDoc(userDoc, { 
-                program,
-                userInfo: this.userInfo,
-                createdAt: new Date().toISOString()
-            }, { merge: true });
-            
-            console.log('[DEBUG] ✅ Program başarıyla kaydedildi!');
-            
-            // Deneyim seviyesini sakla (resetUserInfo çağrısından önce)
-            const experienceLevel = this.userInfo.experience;
-            
-            // Reset user info after successful program generation
-            this.resetUserInfo();
-            
-            return `🎉 **Harika! Kişisel antrenman programınız hazır!**
-
-📋 **Program Detayları:**
-• ${Object.keys(program).length} günlük antrenman programı
-• Toplam ${Object.values(program).reduce((total, day) => total + day.length, 0)} egzersiz
-• Deneyim seviyeniz: ${experienceLevel}
-
-✅ **Program Firebase'e kaydedildi!**
-📅 **Calendar ekranından programınızı görüntüleyebilirsiniz.**
-
-💪 Başarılar dilerim!`;
-        } catch (error) {
-            console.error('[DEBUG] ❌ Program oluşturma hatası:', error);
-            return `❌ **Program oluşturulurken bir hata oluştu:**
-
-${error instanceof Error ? error.message : 'Bilinmeyen hata'}
-
-🔄 **Lütfen tekrar deneyin veya farklı bilgiler verin.**`;
+        const exercise = exercises[exerciseName as keyof typeof exercises];
+        if (!exercise) {
+            return "Bu egzersiz hakkında bilgi bulunamadı.";
         }
-    }
-    
-    private getDefaultResponse(): string {
-        const responses = [
-            "Size nasıl yardımcı olabilirim? Antrenman programları, egzersiz teknikleri, beslenme önerileri veya genel fitness konularında sorularınızı yanıtlayabilirim! 💪",
-            "Fitness yolculuğunuzda size rehberlik edebilirim. Hangi konuda bilgi almak istersiniz? 🏋️‍♀️",
-            "Antrenman, beslenme, toparlanma veya egzersiz teknikleri hakkında sorularınız varsa çekinmeyin! 🎯",
-            "Hedefinize ulaşmak için size özel öneriler verebilirim. Ne konuda yardıma ihtiyacınız var? 🔥"
-        ];
-        
-        return responses[Math.floor(Math.random() * responses.length)];
+
+        return `🏋️‍♀️ **${exerciseName} Tekniği:**
+
+**Açıklama:**
+${exercise.description}
+
+**Hedef Kaslar:**
+${exercise.targetMuscles.map(muscle => `• ${muscle}`).join('\n')}
+
+**Ekipman:**
+• ${exercise.equipment}
+
+**Adımlar:**
+${exercise.instructions.map((instruction, index) => `${index + 1}. ${instruction}`).join('\n')}`;
     }
 
-    // Türkçe deneyim seviyesi normalize fonksiyonu
-    private normalizeExperience(exp: string) {
-        const e = exp.toLowerCase();
-        if (e.includes('advanced') || e.includes('ileri')) return 'ileri seviye';
-        if (e.includes('intermediate') || e.includes('orta')) return 'orta seviye';
-        if (e.includes('beginner') || e.includes('başlangıç')) return 'başlangıç';
-        return 'başlangıç';
+    // Method to update conversation history
+    updateConversationHistory(messages: Message[]) {
+        this.conversationHistory = messages;
     }
 
-    private resetUserInfo() {
-        this.userInfo = {};
+    // Method to set AI server URL (for configuration)
+    setServerUrl(url: string) {
+        this.baseUrl = url;
     }
 }
 
-export default new AIService(); 
+const aiService = new AIService();
+export default aiService; 
