@@ -318,7 +318,7 @@ Bu bir saniye sürecek!`;
             console.log('[DEBUG] Normalize edilmiş deneyim:', this.userInfo.experience);
             
             // Call the LLM API to generate the program
-            const response = await fetch('http://localhost:8000/generate-program', {
+            const response = await fetch('http://vps-8e6957ba.vps.ovh.net:8000/generate-program', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
