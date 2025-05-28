@@ -219,17 +219,29 @@ const Calendar = () => {
         );
     }
 
+    const dayOrder = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday'
+      ];
+
     return (
         <Container style={styles.container}>
             <Text style={styles.title}>Weekly Program</Text>
-            <ScrollView style={styles.scrollView}>
-                {Object.entries(program).map(([day, exercises]) => (
+            <ScrollView style={styles.scrollView}>                
+                {Object.entries(program)
+                .sort(([dayA], [dayB]) => dayOrder.indexOf(dayA) - dayOrder.indexOf(dayB))
+                .map(([day, exercises]) => (
                     <DayCard 
-                        key={day} 
-                        day={day} 
-                        exercises={exercises} 
-                        exerciseDetails={exerciseDetails}
-                        onExercisePress={handleExercisePress}
+                    key={day} 
+                    day={day} 
+                    exercises={exercises} 
+                    exerciseDetails={exerciseDetails}
+                    onExercisePress={handleExercisePress}
                     />
                 ))}
             </ScrollView>

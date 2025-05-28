@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, addDoc } from '@firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, setDoc } from '@firebase/firestore';
 import { firestore } from '../app/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 
@@ -127,10 +127,13 @@ class AIService {
             };
 
             // Save to Firebase
-            await addDoc(collection(firestore, 'userPrograms'), programData);
+            const userDoc = doc(firestore, 'users',getAuth().currentUser?.uid); // Replace with actual user ID
+            await setDoc(userDoc, { 
+                program,
+            }, { merge: true });
             
-            console.log('Program successfully saved to Firebase');
-            
+            console.log('[DEBUG] ✅ Program başarıyla kaydedildi!');
+                        
         } catch (error) {
             console.error('Error saving program to Firebase:', error);
         }

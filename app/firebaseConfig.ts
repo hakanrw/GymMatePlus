@@ -18,7 +18,7 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Only use emulators in development mode
-if (__DEV__ && Platform.OS === "web") {
+if (__DEV__ && Platform.OS === "web" && false) {
     connectAuthEmulator(getAuth(app), 'http://localhost:9099');
     connectFirestoreEmulator(getFirestore(app), 'localhost', 9299);
     connectFunctionsEmulator(getFunctions(app, 'europe-west1'), 'localhost', 5001)
