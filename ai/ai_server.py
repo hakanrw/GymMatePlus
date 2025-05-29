@@ -325,7 +325,7 @@ def ai_chat():
                         # Create user info for program generation
                         user_info = {
                             'gender': user_profile.get('gender', 'erkek').lower(),
-                            'experience': user_profile.get('experience', 'başlangıç').lower(),
+                            'experience': user_profile.get('difficulty', 'Easy').lower(),
                             'goal': response_json['goal'],
                             'workout_days': int(response_json['workout_days']),
                             'focus_area': 'full_body'
@@ -356,7 +356,7 @@ def ai_chat():
 📊 **Program Detayları:**
 • Hedef: {goal_display_map.get(response_json['goal'], response_json['goal'])}
 • Süre: {response_json['workout_days']} gün/hafta
-• Seviye: {user_profile.get('experience', 'Başlangıç')}
+• Seviye: {user_profile.get('difficulty', 'Başlangıç')}
 
 💪 Programınız başarıyla oluşturuldu ve profilinize kaydedildi. "Programlarım" sekmesinden detaylarını görüntüleyebilirsiniz.
 
@@ -370,7 +370,7 @@ Başarılı antrenmanlar dilerim! Herhangi bir sorunuz olursa çekinmeyin."""
                             'user_info': {
                                 'goal': goal_display_map.get(response_json['goal'], response_json['goal']),
                                 'workout_days': response_json['workout_days'],
-                                'experience': user_profile.get('experience', 'Başlangıç')
+                                'experience': user_profile.get('difficulty', 'Başlangıç')
                             },
                             'timestamp': data.get('timestamp', '')
                         })

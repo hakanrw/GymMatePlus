@@ -15,20 +15,17 @@ def get_level_specific_data(experience_level):
     try:
         # Map experience levels to Firebase difficulty levels
         level_mapping = {
-            "başlangıç": "Beginner",
-            "orta seviye": "Intermediate",
-            "ileri seviye": "Advanced",
-            "beginner": "Beginner",
-            "intermediate": "Intermediate",
-            "advanced": "Advanced",
+            "easy": ["Beginner"],
+            "medium": ["Beginner", "Intermediate"],
+            "hard": ["Beginner", "Intermediate", "Advanced"]
         }
 
-        difficulty = level_mapping.get(experience_level.lower(), "Beginner")
+        difficulty = level_mapping.get(experience_level.lower(), ["Beginner"])
         print(f"[DEBUG] Fetching exercises for difficulty level: {difficulty}")
 
         # Query Firestore for exercises with the specified difficulty
         exercises_ref = db.collection('exercises')
-        query = exercises_ref.where('difficulty', '==', difficulty)
+        query = exercises_ref.where('difficulty', 'in', difficulty)
         exercises = query.get()
 
         if not exercises:
