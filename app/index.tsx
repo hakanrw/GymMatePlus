@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FontAwesome } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import Welcome from './Screens/GymSelection/Welcome';
 
@@ -192,11 +193,23 @@ export default function App() {
     const [pingTrigger, setPingTrigger] = useState(false); // or use a counter (number)
     const togglePing = () => setPingTrigger(prev => !prev); // toggles between true/false
 
+    // Configure Google Sign-In when app starts
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: '714875913611-8csudoq3gdh0rjd321291juu4a0mssod.apps.googleusercontent.com', // from google-services.json
+            scopes: ['profile', 'email'],
+            offlineAccess: true,
+        });
+    }, []);
+
     useEffect(() => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
+        console.log("Auth state changed:", user ? "User logged in" : "User logged out");
         setUser(user);
-        setLoading(false);
-        console.log("User", user);
+        // Add a small delay to ensure auth state is fully initialized
+        setTimeout(() => {
+          setLoading(false);
+        }, 100);
       });
   
       return unsubscribe;
@@ -225,7 +238,14 @@ export default function App() {
         }
     }, [user, onboardingComplete, pingTrigger]);
   
-    if (loading || (user && onboardingComplete === null) || (user && onboardingComplete && gym === -1)) return null;
+    if (loading || (user && onboardingComplete === null) || (user && onboardingComplete && gym === -1)) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+                <Text style={{ fontSize: 18, marginBottom: 10, color: '#000' }}>Loading...</Text>
+                <Text style={{ fontSize: 14, color: '#666' }}>Initializing authentication</Text>
+            </View>
+        );
+    }
 
     return (
       <AppContext.Provider value={{ping: togglePing}}>

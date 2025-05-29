@@ -51,9 +51,11 @@ function SignUpScreen({ navigation }: any) {
             }
         } else {
             try {
-                GoogleSignin.configure({
-                    scopes: ['profile', 'email']
-                });
+                // Check if user is already signed in and sign out to force account selection
+                const currentUser = await GoogleSignin.getCurrentUser();
+                if (currentUser) {
+                    await GoogleSignin.signOut();
+                }
                 
                 await GoogleSignin.hasPlayServices();
                 const response = await GoogleSignin.signIn();
@@ -87,6 +89,9 @@ function SignUpScreen({ navigation }: any) {
                             break;
                         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
                             console.error("Play services not available");
+                            break;
+                        case statusCodes.SIGN_IN_CANCELLED:
+                            console.log("User cancelled sign in");
                             break;
                         default:
                             console.error("Error:", error);

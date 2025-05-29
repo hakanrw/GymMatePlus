@@ -17,14 +17,17 @@ const firebaseConfig = {
 // Prevent duplicate initialization
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
+// Initialize Auth - Firebase v9+ handles persistence automatically
+const auth = getAuth(app);
+
 // Only use emulators in development mode
 if (__DEV__ && Platform.OS === "web" && false) {
-    connectAuthEmulator(getAuth(app), 'http://localhost:9099');
+    connectAuthEmulator(auth, 'http://localhost:9099');
     connectFirestoreEmulator(getFirestore(app), 'localhost', 9299);
     connectFunctionsEmulator(getFunctions(app, 'europe-west1'), 'localhost', 5001)
 }
 
 export { app };
-export const auth = getAuth(app);
+export { auth };
 export const firestore = getFirestore(app);
 export const functions = getFunctions(app, 'europe-west1');

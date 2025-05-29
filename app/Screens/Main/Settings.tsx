@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc, getFirestore } from '@firebase/firestore';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const Settings = () => {
     const navigation = useNavigation() as any;
@@ -94,10 +95,28 @@ const Settings = () => {
                     style: 'destructive',
                     onPress: async () => {
                         try {
+                            console.log('Starting sign out process...');
+                            
+                            // Sign out from Google Sign-In first to clear cached account
+                            try {
+                                const currentUser = await GoogleSignin.getCurrentUser();
+                                if (currentUser) {
+                                    console.log('Signing out from Google...');
+                                    await GoogleSignin.signOut();
+                                    console.log('Google sign out successful');
+                                }
+                            } catch (googleError) {
+                                console.log('Google sign out error (this is usually okay):', googleError);
+                            }
+                            
+                            // Then sign out from Firebase
+                            console.log('Signing out from Firebase...');
                             await signOut(auth);
+                            console.log('Firebase sign out successful');
+                            
                         } catch (error) {
                             console.error('Error signing out:', error);
-                            Alert.alert('Error', 'Failed to sign out');
+                            Alert.alert('Error', 'Failed to sign out completely. Please try again.');
                         }
                     },
                 },
