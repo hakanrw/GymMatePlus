@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, addDoc, doc, setDoc } from '@firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, setDoc, updateDoc, deleteField } from '@firebase/firestore';
 import { firestore } from '../app/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 
@@ -147,9 +147,12 @@ class AIService {
 
             // Save to Firebase
             const userDoc = doc(firestore, 'users', currentUser.uid);
+            await updateDoc(userDoc, {
+                program: deleteField()
+            });
             await setDoc(userDoc, { 
                 program,
-            }, { merge: false });
+            }, { merge: true });
             
             console.log('[DEBUG] ✅ Program başarıyla kaydedildi!');
                         
