@@ -50,6 +50,7 @@ import EntryHistory from './Screens/Main/EntryHistory';
 import Settings from './Screens/Main/Settings';
 import TraineeEntries from './Screens/Main/TraineeEntries';
 import Exercises from './Screens/Main/Exercises';
+import AdminPanel from './Screens/Main/AdminPanel';
 import { AuthMethodProvider } from '@/contexts/AuthMethodContext';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -188,6 +189,11 @@ function AppStack() {
             <Stack.Screen
                 name="TraineeEntries"
                 component={TraineeEntries}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AdminPanel"
+                component={AdminPanel}
                 options={{ headerShown: false }}
             />
         </Stack.Navigator>

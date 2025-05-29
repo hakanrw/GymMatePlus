@@ -21,6 +21,7 @@ import { Dumbell } from '@/components/Dumbell';
 import { doc, getDoc, collection, query, where, orderBy, getDocs, onSnapshot } from '@firebase/firestore';
 import { firestore, auth } from '../../firebaseConfig';
 import CoachCalendar from './CoachCalendar';
+import AdminPanel from './AdminPanel';
 import { FontAwesome } from '@expo/vector-icons';
 
 type NavigationProp = NativeStackNavigationProp<CalendarStackParamList>;
@@ -123,6 +124,7 @@ const Calendar = () => {
     const [program, setProgram] = useState<WorkoutProgram | null>(null);
     const [loading, setLoading] = useState(true);
     const [isCoach, setIsCoach] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [exerciseDetails, setExerciseDetails] = useState<{ [key: string]: FirebaseExercise }>({});
 
     useEffect(() => {
@@ -136,13 +138,21 @@ const Calendar = () => {
             const userDoc = await getDoc(doc(firestore, 'users', auth.currentUser.uid));
             const userData = userDoc.data();
 
+            // Check if user is admin first
+            if (userData?.accountType === 'admin') {
+                setIsAdmin(true);
+                setLoading(false);
+                return;
+            }
+
+            // Then check if user is coach
             if (userData?.accountType === 'coach') {
                 setIsCoach(true);
                 setLoading(false);
                 return;
             }
 
-            // Set up real-time listener for program updates
+            // Set up real-time listener for program updates for regular users
             const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
             const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
                 try {
@@ -231,6 +241,10 @@ const Calendar = () => {
                 <Text style={styles.loadingText}>Loading program...</Text>
             </Container>
         );
+    }
+
+    if (isAdmin) {
+        return <AdminPanel />;
     }
 
     if (isCoach) {

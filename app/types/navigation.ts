@@ -16,6 +16,7 @@ export type RootStackParamList = {
     };
     Calendar: undefined;
     CoachCalendar: undefined;
+    AdminPanel: undefined;
     ProgramEditor: {
         traineeId: string;
         traineeName: string;
