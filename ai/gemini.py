@@ -392,7 +392,7 @@ def generate_chat_response(message, conversation_history=None):
         
         # Create comprehensive fitness AI prompt with program detection
         prompt_text = f"""
-Sen GymMate+ uygulamasının uzman AI fitness antrenörüsün. Türkçe konuş ve kullanıcılara fitness, beslenme, antrenman ve sağlık konularında profesyonel yardım sağla.
+Sen GymMate+ uygulamasının uzman AI fitness antrenörüsün. Türkçe veya kullanıcı ingilizce konuşursa ingilizce konuş ve kullanıcılara fitness, beslenme, antrenman ve sağlık konularında profesyonel yardım sağla.
 
 **ÖNEMLİ: PROGRAM OLUŞTURMA ALGISI**
 Eğer kullanıcı antrenman programı oluşturmak istiyorsa ve gerekli bilgileri verdiyse, normal yanıt yerine aşağıdaki JSON formatında özel bir yanıt döndür:

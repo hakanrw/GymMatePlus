@@ -13,6 +13,11 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+    signInWithEmailAndPassword, 
+    signInWithCredential, 
+    GoogleAuthProvider 
+} from 'firebase/auth';
 
 import Welcome from './Screens/GymSelection/Welcome';
 
@@ -51,6 +56,7 @@ WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
 
 const AUTH_STATE_KEY = '@gymmate_auth_state';
+const USER_CREDENTIALS_KEY = '@gymmate_user_credentials';
 
 function AuthStack() {
     return (
@@ -193,7 +199,7 @@ export default function App() {
     const [user, setUser] = useState<User | null>(null);
     const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
     const [gym, setGym] = useState<number | null>(-1);
-    const [authInitialized, setAuthInitialized] = useState(false);
+    const [authRestoreAttempted, setAuthRestoreAttempted] = useState(false);
     
     const [pingTrigger, setPingTrigger] = useState(false);
     const togglePing = () => setPingTrigger(prev => !prev);
@@ -207,72 +213,85 @@ export default function App() {
         });
     }, []);
 
-    // Check for stored auth state on app start
+    // Attempt to restore auth state on app start
     useEffect(() => {
-        const checkStoredAuth = async () => {
+        const restoreAuthState = async () => {
             try {
-                const storedAuth = await AsyncStorage.getItem(AUTH_STATE_KEY);
-                if (storedAuth) {
-                    const authData = JSON.parse(storedAuth);
-                    // Check if stored auth is recent (less than 30 days old)
-                    const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
-                    if (Date.now() - authData.timestamp < thirtyDaysInMs) {
-                        console.log('Found stored auth state, waiting for Firebase to restore session...');
-                        // Don't set loading to false yet, wait for Firebase auth state
-                        return;
+                console.log('🔐 Attempting to restore auth state...');
+                
+                const storedCredentials = await AsyncStorage.getItem(USER_CREDENTIALS_KEY);
+                if (storedCredentials) {
+                    const credentials = JSON.parse(storedCredentials);
+                    console.log('🔐 Found stored credentials, attempting auto-login...');
+                    
+                    if (credentials.type === 'email') {
+                        // Restore email/password login
+                        await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+                        console.log('✅ Auto-login successful with email/password');
+                    } else if (credentials.type === 'google' && credentials.refreshToken) {
+                        // Restore Google login
+                        try {
+                            await GoogleSignin.signInSilently();
+                            const tokens = await GoogleSignin.getTokens();
+                            const credential = GoogleAuthProvider.credential(
+                                tokens.idToken,
+                                tokens.accessToken
+                            );
+                            await signInWithCredential(auth, credential);
+                            console.log('✅ Auto-login successful with Google');
+                        } catch (googleError) {
+                            console.log('❌ Google silent sign-in failed:', googleError);
+                            // Clear invalid Google credentials
+                            await AsyncStorage.removeItem(USER_CREDENTIALS_KEY);
+                        }
                     }
+                } else {
+                    console.log('🔐 No stored credentials found');
                 }
-                // No valid stored auth found
-                console.log('No valid stored auth found');
             } catch (error) {
-                console.error('Error checking stored auth:', error);
+                console.error('❌ Auth restoration failed:', error);
+                // Clear invalid credentials
+                await AsyncStorage.removeItem(USER_CREDENTIALS_KEY);
+            } finally {
+                setAuthRestoreAttempted(true);
+                
+                // Set loading to false after auth restoration attempt
+                setTimeout(() => {
+                    setLoading(false);
+                }, 1000);
             }
         };
 
-        checkStoredAuth();
+        restoreAuthState();
     }, []);
 
+    // Listen to auth state changes
     useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        console.log("Auth state changed:", user ? "User logged in" : "User logged out");
-        setUser(user);
-        setAuthInitialized(true);
+        if (!authRestoreAttempted) return;
         
-        // Only set loading to false after auth state is determined
-        if (!authInitialized) {
-          setTimeout(() => {
-            setLoading(false);
-          }, 100);
-        } else {
-          setLoading(false);
-        }
-      });
-  
-      return unsubscribe;
-    }, [authInitialized]);
+        console.log('🔐 Setting up auth state listener...');
+        
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            console.log('🔐 Auth state changed:', user ? `✅ User: ${user.email}` : '❌ No user');
+            setUser(user);
+            
+            if (user) {
+                // Store auth state for quick UI feedback
+                await AsyncStorage.setItem(AUTH_STATE_KEY, JSON.stringify({
+                    email: user.email,
+                    displayName: user.displayName,
+                    uid: user.uid,
+                    timestamp: Date.now()
+                }));
+            } else {
+                // Clear auth state
+                await AsyncStorage.removeItem(AUTH_STATE_KEY);
+                await AsyncStorage.removeItem(USER_CREDENTIALS_KEY);
+            }
+        });
 
-    // Store auth state in AsyncStorage
-    useEffect(() => {
-      if (authInitialized) {
-        if (user) {
-          // Store auth state in AsyncStorage after user is set
-          AsyncStorage.setItem(AUTH_STATE_KEY, JSON.stringify({
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            timestamp: Date.now()
-          })).catch(error => {
-            console.error('Error storing auth state:', error);
-          });
-        } else {
-          // Clear auth state from AsyncStorage when user is null
-          AsyncStorage.removeItem(AUTH_STATE_KEY).catch(error => {
-            console.error('Error clearing auth state:', error);
-          });
-        }
-      }
-    }, [user, authInitialized]);
+        return unsubscribe;
+    }, [authRestoreAttempted]);
 
     useEffect(() => {
         console.log("Onboard check");
@@ -289,7 +308,7 @@ export default function App() {
 
     useEffect(() => {
         if (user && onboardingComplete) {
-          // Check onboarding status
+          // Check gym selection status
           const docRef = doc(getFirestore(), 'users', user.uid);
           getDoc(docRef).then(docSnap => {
             setGym(docSnap.data()?.gym);

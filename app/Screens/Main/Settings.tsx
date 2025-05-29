@@ -18,6 +18,9 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc, getFirestore } from '@firebase/firestore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const USER_CREDENTIALS_KEY = '@gymmate_user_credentials';
 
 const Settings = () => {
     const navigation = useNavigation() as any;
@@ -113,6 +116,11 @@ const Settings = () => {
                             console.log('Signing out from Firebase...');
                             await signOut(auth);
                             console.log('Firebase sign out successful');
+                            
+                            // Clear stored credentials
+                            console.log('Clearing stored credentials...');
+                            await AsyncStorage.removeItem(USER_CREDENTIALS_KEY);
+                            console.log('Credentials cleared successfully');
                             
                         } catch (error) {
                             console.error('Error signing out:', error);

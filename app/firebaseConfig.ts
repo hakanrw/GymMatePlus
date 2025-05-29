@@ -17,7 +17,7 @@ const firebaseConfig = {
 // Prevent duplicate initialization
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Auth - Firebase v9+ handles persistence automatically
+// Initialize Auth - Firebase v9+ handles persistence automatically in React Native
 const auth = getAuth(app);
 
 // Only use emulators in development mode

@@ -28,6 +28,10 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } fro
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebaseConfig';
 import { useAuthMethod } from '@/contexts/AuthMethodContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Storage key for user credentials
+const USER_CREDENTIALS_KEY = '@gymmate_user_credentials';
 
 // Get the createUser function
 const createUser = httpsCallable(functions, 'createUser');
@@ -195,6 +199,15 @@ function SignUpScreen({ navigation }: any) {
                     // Sign in existing user
                     console.log('Attempting to sign in user');
                     await signInWithEmailAndPassword(auth, email, password);
+                    
+                    // Store credentials for persistence
+                    await AsyncStorage.setItem(USER_CREDENTIALS_KEY, JSON.stringify({
+                        type: 'email',
+                        email: email,
+                        password: password, // Note: In production, consider using secure storage
+                        timestamp: Date.now()
+                    }));
+                    
                     setGlobalAuthMethod('email');
                     console.log('Successfully signed in user');
                 } else {
@@ -207,6 +220,14 @@ function SignUpScreen({ navigation }: any) {
                     await updateProfile(userCredential.user, {
                         displayName: displayName
                     });
+
+                    // Store credentials for persistence
+                    await AsyncStorage.setItem(USER_CREDENTIALS_KEY, JSON.stringify({
+                        type: 'email',
+                        email: email,
+                        password: password, // Note: In production, consider using secure storage
+                        timestamp: Date.now()
+                    }));
 
                     // Call the Firebase Function to create user and assign coach
                     try {
@@ -263,10 +284,17 @@ function SignUpScreen({ navigation }: any) {
                 const result = await signInWithPopup(getAuth(), provider);
                 const user = result.user;
                 
+                // Store Google credentials for persistence (need to get tokens differently for web)
+                await AsyncStorage.setItem(USER_CREDENTIALS_KEY, JSON.stringify({
+                    type: 'google',
+                    refreshToken: 'web_auth', // Web doesn't provide refresh tokens the same way
+                    timestamp: Date.now()
+                }));
+                
                 // Call the Firebase Function to create user and assign coach
                 try {
-                    const result = await createUser();
-                    console.log('User creation result:', result.data);
+                    const createResult = await createUser();
+                    console.log('User creation result:', createResult.data);
                 } catch (error) {
                     console.error('Error calling createUser function:', error);
                 }
@@ -295,6 +323,13 @@ function SignUpScreen({ navigation }: any) {
                     );
                     const result = await signInWithCredential(getAuth(), credential);
                     const user = result.user;
+                    
+                    // Store Google credentials for persistence
+                    await AsyncStorage.setItem(USER_CREDENTIALS_KEY, JSON.stringify({
+                        type: 'google',
+                        refreshToken: tokens.accessToken, // Store refresh token for silent sign-in
+                        timestamp: Date.now()
+                    }));
                     
                     // Call the Firebase Function to create user and assign coach
                     try {
