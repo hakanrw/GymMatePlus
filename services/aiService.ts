@@ -149,7 +149,7 @@ class AIService {
             const userDoc = doc(firestore, 'users', currentUser.uid);
             await setDoc(userDoc, { 
                 program,
-            }, { merge: true });
+            }, { merge: false });
             
             console.log('[DEBUG] ✅ Program başarıyla kaydedildi!');
                         
