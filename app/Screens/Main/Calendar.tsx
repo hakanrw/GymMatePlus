@@ -18,7 +18,7 @@ import type { RootStackParamList, CalendarStackParamList } from '@/app/types/nav
 import { MainButton } from '@/components/MainButton';
 import { Container } from '@/components/Container';
 import { Dumbell } from '@/components/Dumbell';
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from '@firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs, onSnapshot } from '@firebase/firestore';
 import { firestore, auth } from '../../firebaseConfig';
 import CoachCalendar from './CoachCalendar';
 import { FontAwesome } from '@expo/vector-icons';
@@ -26,10 +26,9 @@ import { FontAwesome } from '@expo/vector-icons';
 type NavigationProp = NativeStackNavigationProp<CalendarStackParamList>;
 
 interface Exercise {
-    name: string;
-    sets: number;
-    reps: string;
-    rir: string;
+    exercise: string;
+    sets: string;
+    rpe: string;
 }
 
 interface FirebaseExercise {
@@ -143,15 +142,42 @@ const Calendar = () => {
                 return;
             }
 
-            const userProgram = userData?.program || defaultProgram;
-            setProgram(userProgram);
-            
-            // Fetch exercise details for all exercises in the program
-            await fetchExerciseDetails(userProgram);
+            // Set up real-time listener for program updates
+            const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
+            const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+                try {
+                    if (docSnapshot.exists()) {
+                        const userData = docSnapshot.data();
+                        const userProgram = userData?.program || defaultProgram;
+                        setProgram(userProgram);
+                        
+                        // Fetch exercise details for all exercises in the program
+                        fetchExerciseDetails(userProgram);
+                    } else {
+                        setProgram(defaultProgram);
+                        fetchExerciseDetails(defaultProgram);
+                    }
+                } catch (error) {
+                    console.error('Error processing program update:', error);
+                    setProgram(defaultProgram);
+                    fetchExerciseDetails(defaultProgram);
+                } finally {
+                    setLoading(false);
+                }
+            }, (error) => {
+                console.error('Error listening to program updates:', error);
+                setProgram(defaultProgram);
+                fetchExerciseDetails(defaultProgram);
+                setLoading(false);
+            });
+
+            // Cleanup function
+            return () => unsubscribe();
+
         } catch (error) {
-            console.error('Error loading program:', error);
+            console.error('Error setting up program listener:', error);
             setProgram(defaultProgram);
-        } finally {
+            await fetchExerciseDetails(defaultProgram);
             setLoading(false);
         }
     };

@@ -340,3 +340,37 @@ export const createUser = onCall(
     }
   }
 );
+
+export const checkEmailExists = onCall(
+  { cors: true },
+  async (request) => {
+    try {
+      const { email } = request.data;
+
+      if (!email || typeof email !== 'string') {
+        throw new HttpsError('invalid-argument', 'Email is required and must be a string.');
+      }
+
+      // Basic email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new HttpsError('invalid-argument', 'Invalid email format.');
+      }
+
+      // Check if user exists in Firestore users collection
+      const userQuery = await db.collection('users').where('email', '==', email).limit(1).get();
+      
+      const exists = !userQuery.empty;
+      
+      console.log(`Email check for ${email}: ${exists ? 'exists' : 'not found'}`);
+      
+      return { exists };
+    } catch (error: any) {
+      console.error("Error in checkEmailExists:", error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError('internal', `Error checking email: ${error?.message || 'Unknown error'}`);
+    }
+  }
+);

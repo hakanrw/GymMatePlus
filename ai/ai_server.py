@@ -3,6 +3,9 @@ from flask_cors import CORS
 import sys
 import os
 import json
+import firebase_admin
+from firebase_admin import credentials, firestore
+import threading
 
 # Add the current directory to Python path to import gemini module
 sys.path.append(os.path.dirname(__file__))
@@ -16,6 +19,30 @@ except ImportError as e:
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React Native
+
+# Initialize Firebase once at module level to avoid repeated initialization
+_firebase_initialized = False
+_firebase_lock = threading.Lock()
+_db_client = None
+
+def initialize_firebase():
+    """Initialize Firebase once for the entire application"""
+    global _firebase_initialized, _db_client
+    
+    with _firebase_lock:
+        if not _firebase_initialized:
+            try:
+                # Check if Firebase is already initialized
+                if not firebase_admin._apps:
+                    # Initialize with default credentials (uses environment variables)
+                    firebase_admin.initialize_app()
+                
+                _db_client = firestore.client()
+                _firebase_initialized = True
+                print("[INFO] Firebase initialized successfully")
+            except Exception as e:
+                print(f"[ERROR] Failed to initialize Firebase: {e}")
+                _db_client = None
 
 @app.route('/generate-program', methods=['POST'])
 def create_workout_program():
@@ -389,16 +416,19 @@ def get_user_profile_from_db(user_id):
     Get user profile from Firebase Firestore
     Returns user profile with gender and experience fields
     """
+    global _db_client
+    
     try:
-        # Import Firebase here to avoid circular imports
-        import firebase_admin
-        from firebase_admin import firestore
+        # Initialize Firebase if not already done
+        if not _firebase_initialized or _db_client is None:
+            initialize_firebase()
         
-        # Get Firestore client (assuming Firebase is already initialized)
-        db = firestore.client()
+        if _db_client is None:
+            print(f"[ERROR] Firebase not initialized, cannot get profile for user_id: {user_id}")
+            return None
         
-        # Query user document
-        user_ref = db.collection('users').document(user_id)
+        # Query user document using the shared client
+        user_ref = _db_client.collection('users').document(user_id)
         user_doc = user_ref.get()
         
         if user_doc.exists:
@@ -480,4 +510,50 @@ def health_check():
 if __name__ == '__main__':
     print("Starting AI Server...")
     print(f"Gemini AI available: {generate_workout_program is not None}")
-    app.run(host='0.0.0.0', port=8000, debug=True) 
+    
+    # Initialize Firebase at startup
+    initialize_firebase()
+    
+    # Configure Flask for production-like memory management
+    app.config['JSON_SORT_KEYS'] = False  # Reduce CPU overhead
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False  # Reduce memory for JSON responses
+    
+    # Add request cleanup
+    @app.after_request
+    def after_request(response):
+        """Clean up after each request to prevent memory leaks"""
+        try:
+            # Ensure response is properly formed
+            response.headers['Content-Type'] = 'application/json'
+            response.headers['Connection'] = 'close'  # Ensure connections are closed
+            return response
+        except Exception as e:
+            print(f"[WARNING] Error in after_request cleanup: {e}")
+            return response
+    
+    @app.teardown_request
+    def teardown_request(exception):
+        """Clean up resources after each request"""
+        if exception:
+            print(f"[ERROR] Request ended with exception: {exception}")
+        # Force garbage collection periodically (every 100 requests)
+        import gc
+        if hasattr(teardown_request, 'count'):
+            teardown_request.count += 1
+        else:
+            teardown_request.count = 1
+            
+        if teardown_request.count % 100 == 0:
+            gc.collect()
+            print(f"[INFO] Garbage collection performed after {teardown_request.count} requests")
+    
+    try:
+        app.run(host='0.0.0.0', port=8000, debug=False, threaded=True)  # Use threaded mode for better performance
+    except KeyboardInterrupt:
+        print("\n[INFO] Shutting down AI Server...")
+        # Cleanup Firebase connection if needed
+        try:
+            if _db_client:
+                print("[INFO] Cleaning up Firebase connection...")
+        except:
+            pass 

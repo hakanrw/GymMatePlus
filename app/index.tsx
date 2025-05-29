@@ -12,6 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { FontAwesome } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Welcome from './Screens/GymSelection/Welcome';
 
@@ -44,9 +45,12 @@ import EntryHistory from './Screens/Main/EntryHistory';
 import Settings from './Screens/Main/Settings';
 import TraineeEntries from './Screens/Main/TraineeEntries';
 import Exercises from './Screens/Main/Exercises';
+import { AuthMethodProvider } from '@/contexts/AuthMethodContext';
 
 WebBrowser.maybeCompleteAuthSession();
 const Stack = createNativeStackNavigator();
+
+const AUTH_STATE_KEY = '@gymmate_auth_state';
 
 function AuthStack() {
     return (
@@ -189,31 +193,86 @@ export default function App() {
     const [user, setUser] = useState<User | null>(null);
     const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
     const [gym, setGym] = useState<number | null>(-1);
+    const [authInitialized, setAuthInitialized] = useState(false);
     
-    const [pingTrigger, setPingTrigger] = useState(false); // or use a counter (number)
-    const togglePing = () => setPingTrigger(prev => !prev); // toggles between true/false
+    const [pingTrigger, setPingTrigger] = useState(false);
+    const togglePing = () => setPingTrigger(prev => !prev);
 
     // Configure Google Sign-In when app starts
     useEffect(() => {
         GoogleSignin.configure({
-            webClientId: '714875913611-8csudoq3gdh0rjd321291juu4a0mssod.apps.googleusercontent.com', // from google-services.json
+            webClientId: '714875913611-8csudoq3gdh0rjd321291juu4a0mssod.apps.googleusercontent.com',
             scopes: ['profile', 'email'],
             offlineAccess: true,
         });
+    }, []);
+
+    // Check for stored auth state on app start
+    useEffect(() => {
+        const checkStoredAuth = async () => {
+            try {
+                const storedAuth = await AsyncStorage.getItem(AUTH_STATE_KEY);
+                if (storedAuth) {
+                    const authData = JSON.parse(storedAuth);
+                    // Check if stored auth is recent (less than 30 days old)
+                    const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+                    if (Date.now() - authData.timestamp < thirtyDaysInMs) {
+                        console.log('Found stored auth state, waiting for Firebase to restore session...');
+                        // Don't set loading to false yet, wait for Firebase auth state
+                        return;
+                    }
+                }
+                // No valid stored auth found
+                console.log('No valid stored auth found');
+            } catch (error) {
+                console.error('Error checking stored auth:', error);
+            }
+        };
+
+        checkStoredAuth();
     }, []);
 
     useEffect(() => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         console.log("Auth state changed:", user ? "User logged in" : "User logged out");
         setUser(user);
-        // Add a small delay to ensure auth state is fully initialized
-        setTimeout(() => {
+        setAuthInitialized(true);
+        
+        // Only set loading to false after auth state is determined
+        if (!authInitialized) {
+          setTimeout(() => {
+            setLoading(false);
+          }, 100);
+        } else {
           setLoading(false);
-        }, 100);
+        }
       });
   
       return unsubscribe;
-    }, []);
+    }, [authInitialized]);
+
+    // Store auth state in AsyncStorage
+    useEffect(() => {
+      if (authInitialized) {
+        if (user) {
+          // Store auth state in AsyncStorage after user is set
+          AsyncStorage.setItem(AUTH_STATE_KEY, JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            timestamp: Date.now()
+          })).catch(error => {
+            console.error('Error storing auth state:', error);
+          });
+        } else {
+          // Clear auth state from AsyncStorage when user is null
+          AsyncStorage.removeItem(AUTH_STATE_KEY).catch(error => {
+            console.error('Error clearing auth state:', error);
+          });
+        }
+      }
+    }, [user, authInitialized]);
 
     useEffect(() => {
         console.log("Onboard check");
@@ -241,15 +300,23 @@ export default function App() {
     if (loading || (user && onboardingComplete === null) || (user && onboardingComplete && gym === -1)) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-                <Text style={{ fontSize: 18, marginBottom: 10, color: '#000' }}>Loading...</Text>
-                <Text style={{ fontSize: 14, color: '#666' }}>Initializing authentication</Text>
+                <View style={{ alignItems: 'center' }}>
+                    <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 10, color: '#000' }}>GymMate+</Text>
+                    <Text style={{ fontSize: 16, color: '#666', marginBottom: 20 }}>Initializing your fitness journey</Text>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#007AFF' }} />
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#007AFF', opacity: 0.7 }} />
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#007AFF', opacity: 0.4 }} />
+                    </View>
+                </View>
             </View>
         );
     }
 
     return (
       <AppContext.Provider value={{ping: togglePing}}>
-        <NavigationIndependentTree>
+        <AuthMethodProvider>
+          <NavigationIndependentTree>
             {!user ? (
                 <AuthStack />
             ) : !onboardingComplete ? (
@@ -259,7 +326,8 @@ export default function App() {
             ) : (
                 <AppStack />
             )}      
-        </NavigationIndependentTree>
+          </NavigationIndependentTree>
+        </AuthMethodProvider>
       </AppContext.Provider>
     );
 }

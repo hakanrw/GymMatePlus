@@ -9,7 +9,8 @@ import {
     Image,
     Alert,
     Modal,
-    TextInput
+    TextInput,
+    Animated
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Container } from '@/components/Container';
@@ -331,7 +332,17 @@ const Profile = () => {
     if (loading) {
         return (
             <Container>
-                <Text>Loading...</Text>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ alignItems: 'center' }}>
+                        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 10, color: '#000' }}>BodyTrack™</Text>
+                        <Text style={{ fontSize: 16, color: '#666', marginBottom: 20 }}>Loading your fitness data</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#007AFF' }} />
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#007AFF', opacity: 0.7 }} />
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#007AFF', opacity: 0.4 }} />
+                        </View>
+                    </View>
+                </View>
             </Container>
         );
     }
